@@ -15,7 +15,7 @@ import (
 
 func Connect(cfg *PostgresConfig) (*sqlx.DB, error) {
 	// format connection string
-	dbstr := fmt.Sprintf(
+	cstr := fmt.Sprintf(
 		"postgres://%s:%s@%s/%s?sslmode=disable&statement_cache_mode=describe",
 		cfg.Login,
 		url.QueryEscape(cfg.Passw),
@@ -24,7 +24,7 @@ func Connect(cfg *PostgresConfig) (*sqlx.DB, error) {
 	)
 
 	// parse connection string
-	dbConf, err := pgx.ParseConfig(dbstr)
+	dbConf, err := pgx.ParseConfig(cstr)
 	if err != nil {
 		return nil, err
 	}
@@ -37,16 +37,24 @@ func Connect(cfg *PostgresConfig) (*sqlx.DB, error) {
 	// may be needed for pbbouncer, needs to check
 	//dbConf.PreferSimpleProtocol = true
 	// register pgx conn
-	connStr := stdlib.RegisterConnConfig(dbConf)
+	dsn := stdlib.RegisterConnConfig(dbConf)
 
-	db, err := sqlx.Connect("pgx", connStr)
+
+  sql.Register("micro-wrapper-sql", wrapper.WrapDriver(
+    &stdlib.Driver{}, 
+    wrapper.Tracer(some.NewTracer()),
+  ))
+  wdb, err := sql.Open("micro-wrapper-sql", dsn)
 	if err != nil {
 		return nil, err
 	}
+
+	db := sqlx.NewDb(wdb, "pgx")
 	db.SetMaxOpenConns(int(cfg.ConnMax))
-	db.SetMaxIdleConns(int(cfg.ConnMax / 2))
+	db.SetMaxIdleConns(int(cfg.ConnMaxIdle))
 	db.SetConnMaxLifetime(time.Duration(cfg.ConnLifetime) * time.Second)
 	db.SetConnMaxIdleTime(time.Duration(cfg.ConnMaxIdleTime) * time.Second)
+	
 	return db, nil
 }
 ```

@@ -1,0 +1,139 @@
+package wrapper
+
+import (
+	"context"
+	"time"
+
+	"go.unistack.org/micro/v3/logger"
+	"go.unistack.org/micro/v3/meter"
+	"go.unistack.org/micro/v3/tracer"
+)
+
+var (
+	// DefaultMeterStatsInterval holds default stats interval
+	DefaultMeterStatsInterval = 5 * time.Second
+	// DefaultMeterMetricPrefix holds default metric prefix
+	DefaultMeterMetricPrefix = "micro_sql_"
+	// DefaultMeterLabelPrefix holds default label prefix
+	DefaultMeterLabelPrefix = "micro_"
+)
+
+var (
+	MaxOpenConnections = "max_open_connections"
+	OpenConnections    = "open_connections"
+	InuseConnections   = "inuse_connections"
+	IdleConnections    = "idle_connections"
+	WaitConnections    = "wait_connections"
+	BlockedSeconds     = "blocked_seconds"
+	MaxIdleClosed      = "max_idletime_closed"
+	MaxLifetimeClosed  = "max_lifetime_closed"
+
+	//	RequestTotal          = "request_total"
+	//	RequestLatencyMicroseconds = "request_latency_microseconds"
+	//	RequestDurationSeconds    = "request_duration_seconds"
+
+	labelSuccess  = "success"
+	labelFailure  = "failure"
+	labelHost     = "db_host"
+	labelDatabase = "db_name"
+)
+
+// Options struct holds wrapper options
+type Options struct {
+	Logger             logger.Logger
+	Meter              meter.Meter
+	Tracer             tracer.Tracer
+	DatabaseHost       string
+	DatabaseName       string
+	ServiceName        string
+	ServiceVersion     string
+	ServiceID          string
+	MeterLabelPrefix   string
+	MeterMetricPrefix  string
+	MeterStatsInterval time.Duration
+	LoggerLevel        logger.Level
+}
+
+// Option func signature
+type Option func(*Options)
+
+// NewOptions create new Options struct from provided option slice
+func NewOptions(opts ...Option) Options {
+	options := Options{
+		Logger:             logger.DefaultLogger,
+		Meter:              meter.DefaultMeter,
+		Tracer:             tracer.DefaultTracer,
+		MeterStatsInterval: DefaultMeterStatsInterval,
+		MeterMetricPrefix:  DefaultMeterMetricPrefix,
+		MeterLabelPrefix:   DefaultMeterLabelPrefix,
+		LoggerLevel:        logger.ErrorLevel,
+	}
+	for _, o := range opts {
+		o(&options)
+	}
+	return options
+}
+
+// MetricInterval specifies stats interval for *sql.DB
+func MetricInterval(td time.Duration) Option {
+	return func(o *Options) {
+		o.MeterStatsInterval = td
+	}
+}
+
+// LabelPrefix specifies prefix for each label
+func LabelPrefix(pref string) Option {
+	return func(o *Options) {
+		o.MeterLabelPrefix = pref
+	}
+}
+
+// MetricPrefix specifies prefix for each metric
+func MetricPrefix(pref string) Option {
+	return func(o *Options) {
+		o.MeterMetricPrefix = pref
+	}
+}
+
+func DatabaseHost(host string) Option {
+	return func(o *Options) {
+		o.DatabaseHost = host
+	}
+}
+
+func DatabaseName(name string) Option {
+	return func(o *Options) {
+		o.DatabaseName = name
+	}
+}
+
+// Meter passes meter.Meter to wrapper
+func Meter(m meter.Meter) Option {
+	return func(o *Options) {
+		o.Meter = m
+	}
+}
+
+// Logger passes logger.Logger to wrapper
+func Logger(l logger.Logger) Option {
+	return func(o *Options) {
+		o.Logger = l
+	}
+}
+
+// Tracer passes tracer.Tracer to wrapper
+func Tracer(t tracer.Tracer) Option {
+	return func(o *Options) {
+		o.Tracer = t
+	}
+}
+
+type queryNameKey struct{}
+
+// QueryName passes query name to wrapper func
+func QueryName(ctx context.Context, name string) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, queryNameKey{}, name)
+}
