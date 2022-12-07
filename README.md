@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
+	wrapper "go.unistack.org/micro-wrapper-sql/v3"
 )
 
 func Connect(cfg *PostgresConfig) (*sqlx.DB, error) {
