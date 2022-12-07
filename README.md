@@ -1,8 +1,10 @@
-# micro-wrapper-sqlpackage postgres
+# micro-wrapper-sql
 
 Example for For postgres 
 
 ```go
+package postgres
+
 import (
 	"fmt"
 	"net/url"
