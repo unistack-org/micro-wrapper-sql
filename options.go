@@ -14,8 +14,6 @@ var (
 	DefaultMeterStatsInterval = 5 * time.Second
 	// DefaultMeterMetricPrefix holds default metric prefix
 	DefaultMeterMetricPrefix = "micro_sql_"
-	// DefaultMeterLabelPrefix holds default label prefix
-	DefaultMeterLabelPrefix = "micro_"
 )
 
 var (
@@ -25,7 +23,8 @@ var (
 	IdleConnections    = "idle_connections"
 	WaitConnections    = "wait_connections"
 	BlockedSeconds     = "blocked_seconds"
-	MaxIdleClosed      = "max_idletime_closed"
+	MaxIdleClosed      = "max_idle_closed"
+	MaxIdletimeClosed  = "max_idletime_closed"
 	MaxLifetimeClosed  = "max_lifetime_closed"
 
 	//	RequestTotal          = "request_total"
@@ -48,7 +47,6 @@ type Options struct {
 	ServiceName        string
 	ServiceVersion     string
 	ServiceID          string
-	MeterLabelPrefix   string
 	MeterMetricPrefix  string
 	MeterStatsInterval time.Duration
 	LoggerLevel        logger.Level
@@ -65,12 +63,20 @@ func NewOptions(opts ...Option) Options {
 		Tracer:             tracer.DefaultTracer,
 		MeterStatsInterval: DefaultMeterStatsInterval,
 		MeterMetricPrefix:  DefaultMeterMetricPrefix,
-		MeterLabelPrefix:   DefaultMeterLabelPrefix,
 		LoggerLevel:        logger.ErrorLevel,
 	}
 	for _, o := range opts {
 		o(&options)
 	}
+
+	options.Meter = options.Meter.Clone(
+		meter.MetricPrefix(options.MeterMetricPrefix),
+		meter.Labels(
+			labelHost, options.DatabaseHost,
+			labelDatabase, options.DatabaseName,
+		),
+	)
+
 	return options
 }
 
@@ -78,13 +84,6 @@ func NewOptions(opts ...Option) Options {
 func MetricInterval(td time.Duration) Option {
 	return func(o *Options) {
 		o.MeterStatsInterval = td
-	}
-}
-
-// LabelPrefix specifies prefix for each label
-func LabelPrefix(pref string) Option {
-	return func(o *Options) {
-		o.MeterLabelPrefix = pref
 	}
 }
 
@@ -136,4 +135,11 @@ func QueryName(ctx context.Context, name string) context.Context {
 		ctx = context.Background()
 	}
 	return context.WithValue(ctx, queryNameKey{}, name)
+}
+
+func getQueryName(ctx context.Context) string {
+	if v, ok := ctx.Value(queryNameKey{}).(string); ok {
+		return v
+	}
+	return ""
 }
