@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
-
-	"go.unistack.org/micro/v3/tracer"
 )
 
 // wrapperConn defines a wrapper for driver.Conn
@@ -39,23 +37,16 @@ func (w *wrapperConn) Begin() (driver.Tx, error) {
 
 // BeginTx implements driver.ConnBeginTx BeginTx
 func (w *wrapperConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
-	var nctx context.Context
-	var span tracer.Span
-
-	name := getQueryName(ctx)
-	if name != "" {
-		nctx, span = w.opts.Tracer.Start(ctx, "BeginTx "+name)
-	} else {
-		nctx, span = w.opts.Tracer.Start(ctx, "BeginTx")
+	nctx, span := w.opts.Tracer.Start(ctx, "BeginTx")
+	span.AddLabels("op", "BeginTx")
+	if name := getQueryName(ctx); name != "" {
+		span.AddLabels("query", name)
 	}
-	if name == "" {
-		name = "unknown"
-	}
-	span.AddLabels("query", name)
 	if connBeginTx, ok := w.conn.(driver.ConnBeginTx); ok {
 		tx, err := connBeginTx.BeginTx(nctx, opts)
 		if err != nil {
 			span.AddLabels("error", true)
+			span.AddLabels("err", err.Error())
 			return nil, err
 		}
 		return &wrapperTx{tx: tx, opts: w.opts, span: span}, nil
@@ -63,29 +54,23 @@ func (w *wrapperConn) BeginTx(ctx context.Context, opts driver.TxOptions) (drive
 	tx, err := w.conn.Begin()
 	if err != nil {
 		span.AddLabels("error", true)
+		span.AddLabels("err", err.Error())
 	}
 	return tx, err
 }
 
 // PrepareContext implements driver.ConnPrepareContext PrepareContext
 func (w *wrapperConn) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
-	var nctx context.Context
-	var span tracer.Span
-
-	name := getQueryName(ctx)
-	if name != "" {
-		nctx, span = w.opts.Tracer.Start(ctx, "BeginTx "+name)
-	} else {
-		nctx, span = w.opts.Tracer.Start(ctx, "BeginTx")
+	nctx, span := w.opts.Tracer.Start(ctx, "PrepareContext")
+	span.AddLabels("op", "PrepareContext")
+	if name := getQueryName(ctx); name != "" {
+		span.AddLabels("query", name)
 	}
-	if name == "" {
-		name = "unknown"
-	}
-	span.AddLabels("query", name)
 	if connPrepareContext, ok := w.conn.(driver.ConnPrepareContext); ok {
 		stmt, err := connPrepareContext.PrepareContext(nctx, query)
 		if err != nil {
 			span.AddLabels("error", true)
+			span.AddLabels("err", err.Error())
 			return nil, err
 		}
 		return &wrapperStmt{stmt: stmt, opts: w.opts}, nil
@@ -93,6 +78,7 @@ func (w *wrapperConn) PrepareContext(ctx context.Context, query string) (driver.
 	stmt, err := w.conn.Prepare(query)
 	if err != nil {
 		span.AddLabels("error", true)
+		span.AddLabels("err", err.Error())
 	}
 	return stmt, err
 }
@@ -107,35 +93,33 @@ func (w *wrapperConn) Exec(query string, args []driver.Value) (driver.Result, er
 
 // Exec implements driver.StmtExecContext ExecContext
 func (w *wrapperConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
-	var nctx context.Context
-	var span tracer.Span
-	name := getQueryName(ctx)
-	if name != "" {
-		nctx, span = w.opts.Tracer.Start(ctx, "ExecContext "+name)
-	} else {
-		nctx, span = w.opts.Tracer.Start(ctx, "ExecContext")
+	nctx, span := w.opts.Tracer.Start(ctx, "ExecContext")
+	span.AddLabels("op", "ExecContext")
+	if name := getQueryName(ctx); name != "" {
+		span.AddLabels("query", name)
 	}
 	defer span.Finish()
-	if name == "" {
-		name = "unknown"
+	if len(args) > 0 {
+		span.AddLabels("args", fmt.Sprintf("%v", namedValueToLabels(args)))
 	}
-	span.AddLabels("args", fmt.Sprintf("%v", namedValueToLabels(args)))
-	span.AddLabels("query", name)
 	if execerContext, ok := w.conn.(driver.ExecerContext); ok {
 		res, err := execerContext.ExecContext(nctx, query, args)
 		if err != nil {
 			span.AddLabels("error", true)
+			span.AddLabels("err", err.Error())
 		}
 		return res, err
 	}
 	values, err := namedValueToValue(args)
 	if err != nil {
 		span.AddLabels("error", true)
+		span.AddLabels("err", err.Error())
 		return nil, err
 	}
 	res, err := w.Exec(query, values)
 	if err != nil {
 		span.AddLabels("error", true)
+		span.AddLabels("err", err.Error())
 	}
 	return res, err
 }
@@ -145,7 +129,12 @@ func (w *wrapperConn) Ping(ctx context.Context) error {
 	if pinger, ok := w.conn.(driver.Pinger); ok {
 		nctx, span := w.opts.Tracer.Start(ctx, "Ping")
 		defer span.Finish()
-		return pinger.Ping(nctx)
+		err := pinger.Ping(nctx)
+		if err != nil {
+			span.AddLabels("error", true)
+			span.AddLabels("err", err.Error())
+			return err
+		}
 	}
 	return ErrUnsupported
 }
@@ -160,35 +149,33 @@ func (w *wrapperConn) Query(query string, args []driver.Value) (driver.Rows, err
 
 // QueryContext implements Driver.QueryerContext QueryContext
 func (w *wrapperConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	var nctx context.Context
-	var span tracer.Span
-	name := getQueryName(ctx)
-	if name != "" {
-		nctx, span = w.opts.Tracer.Start(ctx, "QueryContext "+name)
-	} else {
-		nctx, span = w.opts.Tracer.Start(ctx, "QueryContext")
+	nctx, span := w.opts.Tracer.Start(ctx, "QueryContext")
+	span.AddLabels("op", "QueryContext")
+	if name := getQueryName(ctx); name != "" {
+		span.AddLabels("query", name)
 	}
 	defer span.Finish()
-	if name == "" {
-		name = "unknown"
+	if len(args) > 0 {
+		span.AddLabels("args", fmt.Sprintf("%v", namedValueToLabels(args)))
 	}
-	span.AddLabels("args", fmt.Sprintf("%v", namedValueToLabels(args)))
-	span.AddLabels("query", name)
 	if queryerContext, ok := w.conn.(driver.QueryerContext); ok {
 		rows, err := queryerContext.QueryContext(nctx, query, args)
 		if err != nil {
 			span.AddLabels("error", true)
+			span.AddLabels("err", err.Error())
 		}
 		return rows, err
 	}
 	values, err := namedValueToValue(args)
 	if err != nil {
 		span.AddLabels("error", true)
+		span.AddLabels("err", err.Error())
 		return nil, err
 	}
 	rows, err := w.Query(query, values)
 	if err != nil {
 		span.AddLabels("error", true)
+		span.AddLabels("err", err.Error())
 	}
 	return rows, err
 }
