@@ -27,10 +27,14 @@ var (
 	MaxIdletimeClosed  = "max_idletime_closed"
 	MaxLifetimeClosed  = "max_lifetime_closed"
 
-	//	RequestTotal          = "request_total"
-	//	RequestLatencyMicroseconds = "request_latency_microseconds"
-	//	RequestDurationSeconds    = "request_duration_seconds"
+	meterRequestTotal               = "request_total"
+	meterRequestLatencyMicroseconds = "request_latency_microseconds"
+	meterRequestDurationSeconds     = "request_duration_seconds"
 
+	labelUnknown  = "unknown"
+	labelQuery    = "query"
+	labelMethod   = "method"
+	labelStatus   = "status"
 	labelSuccess  = "success"
 	labelFailure  = "failure"
 	labelHost     = "db_host"
@@ -44,9 +48,6 @@ type Options struct {
 	Tracer             tracer.Tracer
 	DatabaseHost       string
 	DatabaseName       string
-	ServiceName        string
-	ServiceVersion     string
-	ServiceID          string
 	MeterMetricPrefix  string
 	MeterStatsInterval time.Duration
 	LoggerLevel        logger.Level
@@ -117,6 +118,13 @@ func Meter(m meter.Meter) Option {
 func Logger(l logger.Logger) Option {
 	return func(o *Options) {
 		o.Logger = l
+	}
+}
+
+// LoggerLevel passes logger.Level option
+func LoggerLevel(lvl logger.Level) Option {
+	return func(o *Options) {
+		o.LoggerLevel = lvl
 	}
 }
 

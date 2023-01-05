@@ -22,6 +22,7 @@ func namedValueToValue(named []driver.NamedValue) ([]driver.Value, error) {
 	return dargs, nil
 }
 
+// namedValueToLabels convert driver arguments to interface{} slice
 func namedValueToLabels(named []driver.NamedValue) []interface{} {
 	largs := make([]interface{}, len(named)*2)
 	var name string

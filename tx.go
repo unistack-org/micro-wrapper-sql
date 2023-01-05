@@ -18,7 +18,8 @@ func (w *wrapperTx) Commit() error {
 	if w.span != nil {
 		defer w.span.Finish()
 	}
-	return w.tx.Commit()
+	err := w.tx.Commit()
+	return err
 }
 
 // Rollback implements driver.Tx Rollback
@@ -26,5 +27,6 @@ func (w *wrapperTx) Rollback() error {
 	if w.span != nil {
 		defer w.span.Finish()
 	}
-	return w.tx.Rollback()
+	err := w.tx.Rollback()
+	return err
 }
