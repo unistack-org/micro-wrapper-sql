@@ -2,6 +2,7 @@ package wrapper
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.unistack.org/micro/v3/logger"
@@ -14,8 +15,17 @@ var (
 	DefaultMeterStatsInterval = 5 * time.Second
 	// DefaultMeterMetricPrefix holds default metric prefix
 	DefaultMeterMetricPrefix = "micro_sql_"
-	// DefaultMeterLabelPrefix holds default label prefix
-	DefaultMeterLabelPrefix = "micro_"
+	// DefaultLoggerObserver used to prepare labels for logger
+	DefaultLoggerObserver = func(ctx context.Context, method string, query string, td time.Duration, err error) []interface{} {
+		labels := []interface{}{"method", method, "took", fmt.Sprintf("%v", td)}
+		if err != nil {
+			labels = append(labels, "error", err.Error())
+		}
+		if query != labelUnknown {
+			labels = append(labels, "query", query)
+		}
+		return labels
+	}
 )
 
 var (
@@ -25,13 +35,18 @@ var (
 	IdleConnections    = "idle_connections"
 	WaitConnections    = "wait_connections"
 	BlockedSeconds     = "blocked_seconds"
-	MaxIdleClosed      = "max_idletime_closed"
+	MaxIdleClosed      = "max_idle_closed"
+	MaxIdletimeClosed  = "max_idletime_closed"
 	MaxLifetimeClosed  = "max_lifetime_closed"
 
-	//	RequestTotal          = "request_total"
-	//	RequestLatencyMicroseconds = "request_latency_microseconds"
-	//	RequestDurationSeconds    = "request_duration_seconds"
+	meterRequestTotal               = "request_total"
+	meterRequestLatencyMicroseconds = "request_latency_microseconds"
+	meterRequestDurationSeconds     = "request_duration_seconds"
 
+	labelUnknown  = "unknown"
+	labelQuery    = "query"
+	labelMethod   = "method"
+	labelStatus   = "status"
 	labelSuccess  = "success"
 	labelFailure  = "failure"
 	labelHost     = "db_host"
@@ -45,13 +60,11 @@ type Options struct {
 	Tracer             tracer.Tracer
 	DatabaseHost       string
 	DatabaseName       string
-	ServiceName        string
-	ServiceVersion     string
-	ServiceID          string
-	MeterLabelPrefix   string
 	MeterMetricPrefix  string
 	MeterStatsInterval time.Duration
 	LoggerLevel        logger.Level
+	LoggerEnabled      bool
+	LoggerObserver     func(ctx context.Context, method string, name string, td time.Duration, err error) []interface{}
 }
 
 // Option func signature
@@ -65,12 +78,23 @@ func NewOptions(opts ...Option) Options {
 		Tracer:             tracer.DefaultTracer,
 		MeterStatsInterval: DefaultMeterStatsInterval,
 		MeterMetricPrefix:  DefaultMeterMetricPrefix,
-		MeterLabelPrefix:   DefaultMeterLabelPrefix,
 		LoggerLevel:        logger.ErrorLevel,
+		LoggerObserver:     DefaultLoggerObserver,
 	}
 	for _, o := range opts {
 		o(&options)
 	}
+
+	options.Meter = options.Meter.Clone(
+		meter.MetricPrefix(options.MeterMetricPrefix),
+		meter.Labels(
+			labelHost, options.DatabaseHost,
+			labelDatabase, options.DatabaseName,
+		),
+	)
+
+	options.Logger = options.Logger.Clone(logger.WithCallerSkipCount(1))
+
 	return options
 }
 
@@ -78,13 +102,6 @@ func NewOptions(opts ...Option) Options {
 func MetricInterval(td time.Duration) Option {
 	return func(o *Options) {
 		o.MeterStatsInterval = td
-	}
-}
-
-// LabelPrefix specifies prefix for each label
-func LabelPrefix(pref string) Option {
-	return func(o *Options) {
-		o.MeterLabelPrefix = pref
 	}
 }
 
@@ -121,6 +138,27 @@ func Logger(l logger.Logger) Option {
 	}
 }
 
+// LoggerEnabled enable sql logging
+func LoggerEnabled(b bool) Option {
+	return func(o *Options) {
+		o.LoggerEnabled = b
+	}
+}
+
+// LoggerLevel passes logger.Level option
+func LoggerLevel(lvl logger.Level) Option {
+	return func(o *Options) {
+		o.LoggerLevel = lvl
+	}
+}
+
+// LoggerObserver passes observer to fill logger fields
+func LoggerObserver(obs func(context.Context, string, string, time.Duration, error) []interface{}) Option {
+	return func(o *Options) {
+		o.LoggerObserver = obs
+	}
+}
+
 // Tracer passes tracer.Tracer to wrapper
 func Tracer(t tracer.Tracer) Option {
 	return func(o *Options) {
@@ -136,4 +174,11 @@ func QueryName(ctx context.Context, name string) context.Context {
 		ctx = context.Background()
 	}
 	return context.WithValue(ctx, queryNameKey{}, name)
+}
+
+func getQueryName(ctx context.Context) string {
+	if v, ok := ctx.Value(queryNameKey{}).(string); ok {
+		return v
+	}
+	return ""
 }
