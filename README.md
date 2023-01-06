@@ -3,7 +3,7 @@
 Example for For postgres 
 
 ```go
-package postgres
+package storage
 
 import (
 	"fmt"
@@ -38,15 +38,25 @@ func Connect(cfg *PostgresConfig) (*sqlx.DB, error) {
 		"application_name":            cfg.AppName,
 	}
 	// may be needed for pbbouncer, needs to check
-	//dbConf.PreferSimpleProtocol = true
+	// dbConf.PreferSimpleProtocol = true
 	// register pgx conn
 	dsn := stdlib.RegisterConnConfig(dbConf)
 
 
-  sql.Register("micro-wrapper-sql", wrapper.WrapDriver(
-    &stdlib.Driver{}, 
-    wrapper.Tracer(some.NewTracer()),
-  ))
+  wrapper.DefaultMeterStatsInterval = 1 * time.Second
+	logger.DefaultLogger = logger.NewLogger(logger.WithLevel(logger.DebugLevel))
+
+	if err := logger.DefaultLogger.Init(); err != nil {
+		t.Fatal(err)
+	}
+
+	sql.Register("micro-wrapper-sql", wrapper.NewWrapper(&sqlite.Driver{},
+		wrapper.DatabaseHost("localhost"),
+		wrapper.DatabaseName("mydb"),
+		wrapper.LoggerLevel(logger.DebugLevel),
+		wrapper.LoggerEnabled(true),
+	))
+
   wdb, err := sql.Open("micro-wrapper-sql", dsn)
 	if err != nil {
 		return nil, err
