@@ -1,7 +1,9 @@
 package wrapper
 
 import (
+	"context"
 	"database/sql/driver"
+	"time"
 
 	"go.unistack.org/micro/v3/tracer"
 )
@@ -18,7 +20,14 @@ func (w *wrapperTx) Commit() error {
 	if w.span != nil {
 		defer w.span.Finish()
 	}
+	ts := time.Now()
 	err := w.tx.Commit()
+	td := time.Since(ts)
+
+	if w.opts.LoggerEnabled {
+		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Commit", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+	}
+
 	return err
 }
 
@@ -27,6 +36,13 @@ func (w *wrapperTx) Rollback() error {
 	if w.span != nil {
 		defer w.span.Finish()
 	}
+	ts := time.Now()
 	err := w.tx.Rollback()
+	td := time.Since(ts)
+
+	if w.opts.LoggerEnabled {
+		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Rollback", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+	}
+
 	return err
 }

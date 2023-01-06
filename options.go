@@ -2,6 +2,7 @@ package wrapper
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.unistack.org/micro/v3/logger"
@@ -14,6 +15,17 @@ var (
 	DefaultMeterStatsInterval = 5 * time.Second
 	// DefaultMeterMetricPrefix holds default metric prefix
 	DefaultMeterMetricPrefix = "micro_sql_"
+	// DefaultLoggerObserver used to prepare labels for logger
+	DefaultLoggerObserver = func(ctx context.Context, method string, query string, td time.Duration, err error) []interface{} {
+		labels := []interface{}{"method", method, "took", fmt.Sprintf("%v", td)}
+		if err != nil {
+			labels = append(labels, "error", err.Error())
+		}
+		if query != labelUnknown {
+			labels = append(labels, "query", query)
+		}
+		return labels
+	}
 )
 
 var (
@@ -51,6 +63,8 @@ type Options struct {
 	MeterMetricPrefix  string
 	MeterStatsInterval time.Duration
 	LoggerLevel        logger.Level
+	LoggerEnabled      bool
+	LoggerObserver     func(ctx context.Context, method string, name string, td time.Duration, err error) []interface{}
 }
 
 // Option func signature
@@ -65,6 +79,7 @@ func NewOptions(opts ...Option) Options {
 		MeterStatsInterval: DefaultMeterStatsInterval,
 		MeterMetricPrefix:  DefaultMeterMetricPrefix,
 		LoggerLevel:        logger.ErrorLevel,
+		LoggerObserver:     DefaultLoggerObserver,
 	}
 	for _, o := range opts {
 		o(&options)
@@ -77,6 +92,8 @@ func NewOptions(opts ...Option) Options {
 			labelDatabase, options.DatabaseName,
 		),
 	)
+
+	options.Logger = options.Logger.Clone(logger.WithCallerSkipCount(1))
 
 	return options
 }
@@ -121,10 +138,24 @@ func Logger(l logger.Logger) Option {
 	}
 }
 
+// LoggerEnabled enable sql logging
+func LoggerEnabled(b bool) Option {
+	return func(o *Options) {
+		o.LoggerEnabled = b
+	}
+}
+
 // LoggerLevel passes logger.Level option
 func LoggerLevel(lvl logger.Level) Option {
 	return func(o *Options) {
 		o.LoggerLevel = lvl
+	}
+}
+
+// LoggerObserver passes observer to fill logger fields
+func LoggerObserver(obs func(context.Context, string, string, time.Duration, error) []interface{}) Option {
+	return func(o *Options) {
+		o.LoggerObserver = obs
 	}
 }
 
