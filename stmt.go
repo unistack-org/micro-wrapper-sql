@@ -5,16 +5,27 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"time"
+
+	"go.unistack.org/micro/v3/tracer"
 )
+
+var _ driver.Stmt = &wrapperStmt{}
 
 // wrapperStmt defines a wrapper for driver.Stmt
 type wrapperStmt struct {
 	stmt driver.Stmt
 	opts Options
+	ctx  context.Context
 }
 
 // Close implements driver.Stmt Close
 func (w *wrapperStmt) Close() error {
+	var ctx context.Context
+	if w.ctx != nil {
+		ctx = w.ctx
+	} else {
+		ctx = context.Background()
+	}
 	labels := []string{labelMethod, "Close"}
 	ts := time.Now()
 	err := w.stmt.Close()
@@ -29,7 +40,7 @@ func (w *wrapperStmt) Close() error {
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Close", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Close", labelUnknown, td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	return err
 }
@@ -41,6 +52,12 @@ func (w *wrapperStmt) NumInput() int {
 
 // Exec implements driver.Stmt Exec
 func (w *wrapperStmt) Exec(args []driver.Value) (driver.Result, error) {
+	var ctx context.Context
+	if w.ctx != nil {
+		ctx = w.ctx
+	} else {
+		ctx = context.Background()
+	}
 	labels := []string{labelMethod, "Exec"}
 	ts := time.Now()
 	// nolint:staticcheck
@@ -56,13 +73,19 @@ func (w *wrapperStmt) Exec(args []driver.Value) (driver.Result, error) {
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Exec", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Exec", labelUnknown, td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	return res, err
 }
 
 // Query implements driver.Stmt Query
 func (w *wrapperStmt) Query(args []driver.Value) (driver.Rows, error) {
+	var ctx context.Context
+	if w.ctx != nil {
+		ctx = w.ctx
+	} else {
+		ctx = context.Background()
+	}
 	labels := []string{labelMethod, "Query"}
 	ts := time.Now()
 	// nolint:staticcheck
@@ -78,14 +101,20 @@ func (w *wrapperStmt) Query(args []driver.Value) (driver.Rows, error) {
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Query", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Query", labelUnknown, td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	return rows, err
 }
 
 // ExecContext implements driver.ExecerContext ExecContext
 func (w *wrapperStmt) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
-	nctx, span := w.opts.Tracer.Start(ctx, "ExecContext")
+	var nctx context.Context
+	var span tracer.Span
+	if w.ctx != nil {
+		nctx, span = w.opts.Tracer.Start(w.ctx, "ExecContext")
+	} else {
+		nctx, span = w.opts.Tracer.Start(ctx, "ExecContext")
+	}
 	span.AddLabels("method", "ExecContext")
 	name := getQueryName(ctx)
 	if name != "" {
@@ -114,7 +143,7 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, query string, args []driv
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "ExecContext", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "ExecContext", name, td, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		return res, err
 	}
@@ -125,7 +154,7 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, query string, args []driv
 		span.AddLabels("err", err.Error())
 
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "ExecContext", name, 0, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "ExecContext", name, 0, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		return nil, err
 	}
@@ -146,14 +175,20 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, query string, args []driv
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "ExecContext", name, td, err)).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "ExecContext", name, td, err)).Log(ctx, w.opts.LoggerLevel)
 	}
 	return res, err
 }
 
 // QueryContext implements Driver.QueryerContext QueryContext
 func (w *wrapperStmt) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	nctx, span := w.opts.Tracer.Start(ctx, "QueryContext")
+	var nctx context.Context
+	var span tracer.Span
+	if w.ctx != nil {
+		nctx, span = w.opts.Tracer.Start(w.ctx, "QueryContext")
+	} else {
+		nctx, span = w.opts.Tracer.Start(ctx, "QueryContext")
+	}
 	span.AddLabels("method", "QueryContext")
 	name := getQueryName(ctx)
 	if name != "" {
@@ -183,7 +218,7 @@ func (w *wrapperStmt) QueryContext(ctx context.Context, query string, args []dri
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "QueryContext", name, td, err)).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "QueryContext", name, td, err)).Log(ctx, w.opts.LoggerLevel)
 		}
 		return rows, err
 	}
@@ -195,7 +230,7 @@ func (w *wrapperStmt) QueryContext(ctx context.Context, query string, args []dri
 		span.AddLabels("err", err.Error())
 
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "QueryContext", name, 0, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "QueryContext", name, 0, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		return nil, err
 	}
@@ -216,7 +251,7 @@ func (w *wrapperStmt) QueryContext(ctx context.Context, query string, args []dri
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "QueryContext", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "QueryContext", name, td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	return rows, err
 }
