@@ -20,6 +20,13 @@ type wrapperConn struct {
 
 // Prepare implements driver.Conn Prepare
 func (w *wrapperConn) Prepare(query string) (driver.Stmt, error) {
+	var ctx context.Context
+	if w.ctx != nil {
+		ctx = w.ctx
+	} else {
+		ctx = context.Background()
+	}
+
 	labels := []string{labelMethod, "Prepare", labelQuery, labelUnknown}
 	ts := time.Now()
 	stmt, err := w.conn.Prepare(query)
@@ -31,7 +38,7 @@ func (w *wrapperConn) Prepare(query string) (driver.Stmt, error) {
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Prepare", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Prepare", labelUnknown, td, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		return nil, err
 	}
@@ -40,14 +47,21 @@ func (w *wrapperConn) Prepare(query string) (driver.Stmt, error) {
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "QueryContext", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Prepare", labelUnknown, td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 
-	return &wrapperStmt{stmt: stmt, opts: w.opts}, nil
+	return &wrapperStmt{stmt: stmt, opts: w.opts, ctx: ctx}, nil
 }
 
 // Close implements driver.Conn Close
 func (w *wrapperConn) Close() error {
+	var ctx context.Context
+	if w.ctx != nil {
+		ctx = w.ctx
+	} else {
+		ctx = context.Background()
+	}
+
 	labels := []string{labelMethod, "Close"}
 	ts := time.Now()
 	err := w.conn.Close()
@@ -62,7 +76,7 @@ func (w *wrapperConn) Close() error {
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "QueryContext", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Close", labelUnknown, td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 
 	return err
@@ -70,6 +84,13 @@ func (w *wrapperConn) Close() error {
 
 // Begin implements driver.Conn Begin
 func (w *wrapperConn) Begin() (driver.Tx, error) {
+	var ctx context.Context
+	if w.ctx != nil {
+		ctx = w.ctx
+	} else {
+		ctx = context.Background()
+	}
+
 	labels := []string{labelMethod, "Begin"}
 	ts := time.Now()
 	// nolint:staticcheck
@@ -81,7 +102,7 @@ func (w *wrapperConn) Begin() (driver.Tx, error) {
 		w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Begin", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Begin", labelUnknown, td, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		return nil, err
 	}
@@ -89,9 +110,9 @@ func (w *wrapperConn) Begin() (driver.Tx, error) {
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Begin", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Begin", labelUnknown, td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
-	return &wrapperTx{tx: tx, opts: w.opts}, nil
+	return &wrapperTx{tx: tx, opts: w.opts, ctx: ctx}, nil
 }
 
 // BeginTx implements driver.ConnBeginTx BeginTx
@@ -117,13 +138,13 @@ func (w *wrapperConn) BeginTx(ctx context.Context, opts driver.TxOptions) (drive
 			span.AddLabels("error", true)
 			span.AddLabels("err", err.Error())
 			if w.opts.LoggerEnabled {
-				w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "BeginTx", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+				w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "BeginTx", name, td, err)...).Log(ctx, w.opts.LoggerLevel)
 			}
 			return nil, err
 		}
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelSuccess)...).Inc()
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "BeginTx", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "BeginTx", name, td, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		w.ctx = nctx
 		return &wrapperTx{ctx: ctx, tx: tx, opts: w.opts, span: span, conn: w}, nil
@@ -144,7 +165,7 @@ func (w *wrapperConn) BeginTx(ctx context.Context, opts driver.TxOptions) (drive
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "BeginTx", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "BeginTx", name, td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	w.ctx = nctx
 	return &wrapperTx{ctx: ctx, tx: tx, opts: w.opts, span: span, conn: w}, nil
@@ -179,7 +200,7 @@ func (w *wrapperConn) PrepareContext(ctx context.Context, query string) (driver.
 			span.AddLabels("error", true)
 			span.AddLabels("err", err.Error())
 			if w.opts.LoggerEnabled {
-				w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "PrepareContext", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+				w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "PrepareContext", name, td, err)...).Log(ctx, w.opts.LoggerLevel)
 			}
 			return nil, err
 		}
@@ -187,7 +208,7 @@ func (w *wrapperConn) PrepareContext(ctx context.Context, query string) (driver.
 		w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "PrepareContext", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "PrepareContext", name, td, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		return &wrapperStmt{stmt: stmt, opts: w.opts, ctx: nctx}, nil
 	}
@@ -206,13 +227,19 @@ func (w *wrapperConn) PrepareContext(ctx context.Context, query string) (driver.
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "PrepareContext", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "PrepareContext", name, td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	return stmt, nil
 }
 
 // Exec implements driver.Execer Exec
 func (w *wrapperConn) Exec(query string, args []driver.Value) (driver.Result, error) {
+	var ctx context.Context
+	if w.ctx != nil {
+		ctx = w.ctx
+	} else {
+		ctx = context.Background()
+	}
 	// nolint:staticcheck
 	labels := []string{labelMethod, "Exec", labelQuery, labelUnknown}
 	if execer, ok := w.conn.(driver.Execer); ok {
@@ -228,12 +255,12 @@ func (w *wrapperConn) Exec(query string, args []driver.Value) (driver.Result, er
 		w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Exec", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Exec", labelUnknown, td, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		return res, err
 	}
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Exec", labelUnknown, 0, ErrUnsupported)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Exec", labelUnknown, 0, ErrUnsupported)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	return nil, ErrUnsupported
 }
@@ -275,7 +302,7 @@ func (w *wrapperConn) ExecContext(ctx context.Context, query string, args []driv
 		w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "ExecContext", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "ExecContext", name, td, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		return res, err
 	}
@@ -284,7 +311,7 @@ func (w *wrapperConn) ExecContext(ctx context.Context, query string, args []driv
 		span.AddLabels("error", true)
 		span.AddLabels("err", err.Error())
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "ExecContext", labelUnknown, 0, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "ExecContext", labelUnknown, 0, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		return nil, err
 	}
@@ -303,7 +330,7 @@ func (w *wrapperConn) ExecContext(ctx context.Context, query string, args []driv
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "ExecContext", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "ExecContext", name, td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	return res, err
 }
@@ -329,7 +356,7 @@ func (w *wrapperConn) Ping(ctx context.Context) error {
 			span.AddLabels("error", true)
 			span.AddLabels("err", err.Error())
 			if w.opts.LoggerEnabled {
-				w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Ping", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+				w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Ping", labelUnknown, td, err)...).Log(ctx, w.opts.LoggerLevel)
 			}
 			return err
 		} else {
@@ -339,13 +366,19 @@ func (w *wrapperConn) Ping(ctx context.Context) error {
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 	}
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Ping", labelUnknown, 0, ErrUnsupported)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Ping", labelUnknown, 0, ErrUnsupported)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	return ErrUnsupported
 }
 
 // Query implements driver.Queryer Query
 func (w *wrapperConn) Query(query string, args []driver.Value) (driver.Rows, error) {
+	var ctx context.Context
+	if w.ctx != nil {
+		ctx = w.ctx
+	} else {
+		ctx = context.Background()
+	}
 	// nolint:staticcheck
 	if conn, ok := w.conn.(driver.Queryer); ok {
 		labels := []string{labelMethod, "Query", labelQuery, labelUnknown}
@@ -361,12 +394,12 @@ func (w *wrapperConn) Query(query string, args []driver.Value) (driver.Rows, err
 		w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Query", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Query", labelUnknown, td, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		return rows, err
 	}
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Query", labelUnknown, 0, ErrUnsupported)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Query", labelUnknown, 0, ErrUnsupported)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	return nil, ErrUnsupported
 }
@@ -407,7 +440,7 @@ func (w *wrapperConn) QueryContext(ctx context.Context, query string, args []dri
 		w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "QueryContext", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "QueryContext", name, td, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		return rows, err
 	}
@@ -416,7 +449,7 @@ func (w *wrapperConn) QueryContext(ctx context.Context, query string, args []dri
 		span.AddLabels("error", true)
 		span.AddLabels("err", err.Error())
 		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "QueryContext", name, 0, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "QueryContext", name, 0, err)...).Log(ctx, w.opts.LoggerLevel)
 		}
 		return nil, err
 	}
@@ -435,7 +468,7 @@ func (w *wrapperConn) QueryContext(ctx context.Context, query string, args []dri
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "QueryContext", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "QueryContext", name, td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	return rows, err
 }
