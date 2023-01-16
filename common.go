@@ -24,7 +24,7 @@ func namedValueToValue(named []driver.NamedValue) ([]driver.Value, error) {
 
 // namedValueToLabels convert driver arguments to interface{} slice
 func namedValueToLabels(named []driver.NamedValue) []interface{} {
-	largs := make([]interface{}, len(named)*2)
+	largs := make([]interface{}, 0, len(named)*2)
 	var name string
 	for _, param := range named {
 		if param.Name != "" {
@@ -32,8 +32,7 @@ func namedValueToLabels(named []driver.NamedValue) []interface{} {
 		} else {
 			name = fmt.Sprintf("$%d", param.Ordinal)
 		}
-
-		largs = append(largs, name, param.Value)
+		largs = append(largs, fmt.Sprintf("%s=%s", name, param.Value))
 	}
 	return largs
 }
