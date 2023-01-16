@@ -5,12 +5,17 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"time"
+
+	"go.unistack.org/micro/v3/tracer"
 )
+
+var _ driver.Conn = &wrapperConn{}
 
 // wrapperConn defines a wrapper for driver.Conn
 type wrapperConn struct {
 	conn driver.Conn
 	opts Options
+	ctx  context.Context
 }
 
 // Prepare implements driver.Conn Prepare
@@ -91,7 +96,7 @@ func (w *wrapperConn) Begin() (driver.Tx, error) {
 
 // BeginTx implements driver.ConnBeginTx BeginTx
 func (w *wrapperConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
-	nctx, span := w.opts.Tracer.Start(ctx, "BeginTx")
+	nctx, span := w.opts.Tracer.Start(ctx, "Transaction")
 	span.AddLabels("method", "BeginTx")
 	name := getQueryName(ctx)
 	if name != "" {
@@ -120,7 +125,8 @@ func (w *wrapperConn) BeginTx(ctx context.Context, opts driver.TxOptions) (drive
 		if w.opts.LoggerEnabled {
 			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "BeginTx", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
 		}
-		return &wrapperTx{tx: tx, opts: w.opts, span: span}, nil
+		w.ctx = nctx
+		return &wrapperTx{ctx: ctx, tx: tx, opts: w.opts, span: span, conn: w}, nil
 	}
 	ts := time.Now()
 	// nolint:staticcheck
@@ -140,12 +146,19 @@ func (w *wrapperConn) BeginTx(ctx context.Context, opts driver.TxOptions) (drive
 	if w.opts.LoggerEnabled {
 		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "BeginTx", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
 	}
-	return tx, nil
+	w.ctx = nctx
+	return &wrapperTx{ctx: ctx, tx: tx, opts: w.opts, span: span, conn: w}, nil
 }
 
 // PrepareContext implements driver.ConnPrepareContext PrepareContext
 func (w *wrapperConn) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
-	nctx, span := w.opts.Tracer.Start(ctx, "PrepareContext")
+	var nctx context.Context
+	var span tracer.Span
+	if w.ctx != nil {
+		nctx, span = w.opts.Tracer.Start(w.ctx, "PrepareContext")
+	} else {
+		nctx, span = w.opts.Tracer.Start(ctx, "PrepareContext")
+	}
 	span.AddLabels("method", "PrepareContext")
 	name := getQueryName(ctx)
 	if name != "" {
@@ -176,7 +189,7 @@ func (w *wrapperConn) PrepareContext(ctx context.Context, query string) (driver.
 		if w.opts.LoggerEnabled {
 			w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "PrepareContext", name, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
 		}
-		return &wrapperStmt{stmt: stmt, opts: w.opts}, nil
+		return &wrapperStmt{stmt: stmt, opts: w.opts, ctx: nctx}, nil
 	}
 	ts := time.Now()
 	stmt, err := w.conn.Prepare(query)
@@ -227,7 +240,13 @@ func (w *wrapperConn) Exec(query string, args []driver.Value) (driver.Result, er
 
 // Exec implements driver.StmtExecContext ExecContext
 func (w *wrapperConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
-	nctx, span := w.opts.Tracer.Start(ctx, "ExecContext")
+	var nctx context.Context
+	var span tracer.Span
+	if w.ctx != nil {
+		nctx, span = w.opts.Tracer.Start(w.ctx, "ExecContext")
+	} else {
+		nctx, span = w.opts.Tracer.Start(ctx, "ExecContext")
+	}
 	span.AddLabels("method", "ExecContext")
 	name := getQueryName(ctx)
 	if name != "" {
@@ -292,7 +311,13 @@ func (w *wrapperConn) ExecContext(ctx context.Context, query string, args []driv
 // Ping implements driver.Pinger Ping
 func (w *wrapperConn) Ping(ctx context.Context) error {
 	if conn, ok := w.conn.(driver.Pinger); ok {
-		nctx, span := w.opts.Tracer.Start(ctx, "Ping")
+		var nctx context.Context
+		var span tracer.Span
+		if w.ctx != nil {
+			nctx, span = w.opts.Tracer.Start(w.ctx, "Ping")
+		} else {
+			nctx, span = w.opts.Tracer.Start(ctx, "Ping")
+		}
 		defer span.Finish()
 		labels := []string{labelMethod, "Ping"}
 		ts := time.Now()
@@ -348,7 +373,13 @@ func (w *wrapperConn) Query(query string, args []driver.Value) (driver.Rows, err
 
 // QueryContext implements Driver.QueryerContext QueryContext
 func (w *wrapperConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	nctx, span := w.opts.Tracer.Start(ctx, "QueryContext")
+	var nctx context.Context
+	var span tracer.Span
+	if w.ctx != nil {
+		nctx, span = w.opts.Tracer.Start(w.ctx, "QueryContext")
+	} else {
+		nctx, span = w.opts.Tracer.Start(ctx, "QueryContext")
+	}
 	span.AddLabels("method", "QueryContext")
 	name := getQueryName(ctx)
 	if name != "" {

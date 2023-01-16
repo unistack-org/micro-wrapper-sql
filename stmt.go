@@ -5,12 +5,17 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"time"
+
+	"go.unistack.org/micro/v3/tracer"
 )
+
+var _ driver.Stmt = &wrapperStmt{}
 
 // wrapperStmt defines a wrapper for driver.Stmt
 type wrapperStmt struct {
 	stmt driver.Stmt
 	opts Options
+	ctx  context.Context
 }
 
 // Close implements driver.Stmt Close
@@ -85,7 +90,13 @@ func (w *wrapperStmt) Query(args []driver.Value) (driver.Rows, error) {
 
 // ExecContext implements driver.ExecerContext ExecContext
 func (w *wrapperStmt) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
-	nctx, span := w.opts.Tracer.Start(ctx, "ExecContext")
+	var nctx context.Context
+	var span tracer.Span
+	if w.ctx != nil {
+		nctx, span = w.opts.Tracer.Start(w.ctx, "ExecContext")
+	} else {
+		nctx, span = w.opts.Tracer.Start(ctx, "ExecContext")
+	}
 	span.AddLabels("method", "ExecContext")
 	name := getQueryName(ctx)
 	if name != "" {
@@ -153,7 +164,13 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, query string, args []driv
 
 // QueryContext implements Driver.QueryerContext QueryContext
 func (w *wrapperStmt) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	nctx, span := w.opts.Tracer.Start(ctx, "QueryContext")
+	var nctx context.Context
+	var span tracer.Span
+	if w.ctx != nil {
+		nctx, span = w.opts.Tracer.Start(w.ctx, "QueryContext")
+	} else {
+		nctx, span = w.opts.Tracer.Start(ctx, "QueryContext")
+	}
 	span.AddLabels("method", "QueryContext")
 	name := getQueryName(ctx)
 	if name != "" {

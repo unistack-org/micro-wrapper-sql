@@ -8,11 +8,15 @@ import (
 	"go.unistack.org/micro/v3/tracer"
 )
 
+var _ driver.Tx = &wrapperTx{}
+
 // wrapperTx defines a wrapper for driver.Tx
 type wrapperTx struct {
 	tx   driver.Tx
 	span tracer.Span
 	opts Options
+	conn *wrapperConn
+	ctx  context.Context
 }
 
 // Commit implements driver.Tx Commit
@@ -30,8 +34,10 @@ func (w *wrapperTx) Commit() error {
 	}
 
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Commit", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(w.ctx, "Commit", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
 	}
+
+	w.ctx = nil
 
 	return err
 }
@@ -51,8 +57,10 @@ func (w *wrapperTx) Rollback() error {
 	}
 
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(context.TODO(), "Rollback", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(w.ctx, "Rollback", labelUnknown, td, err)...).Log(context.TODO(), w.opts.LoggerLevel)
 	}
+
+	w.ctx = nil
 
 	return err
 }
