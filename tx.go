@@ -38,6 +38,7 @@ func (w *wrapperTx) Commit() error {
 	}
 
 	w.ctx = nil
+	w.conn.ctx = nil
 
 	return err
 }
@@ -61,6 +62,7 @@ func (w *wrapperTx) Rollback() error {
 	}
 
 	w.ctx = nil
+	w.conn.ctx = nil
 
 	return err
 }
