@@ -78,7 +78,7 @@ func NewOptions(opts ...Option) Options {
 		Tracer:             tracer.DefaultTracer,
 		MeterStatsInterval: DefaultMeterStatsInterval,
 		MeterMetricPrefix:  DefaultMeterMetricPrefix,
-		LoggerLevel:        logger.ErrorLevel,
+		LoggerLevel:        logger.DebugLevel,
 		LoggerObserver:     DefaultLoggerObserver,
 	}
 	for _, o := range opts {

@@ -50,6 +50,7 @@ func Connect(cfg *PostgresConfig) (*sqlx.DB, error) {
 		t.Fatal(err)
 	}
 
+  // for postgres user stdlib.GetDefaultDriver() or it fails
 	sql.Register("micro-wrapper-sql", wrapper.NewWrapper(&sqlite.Driver{},
 		wrapper.DatabaseHost("localhost"),
 		wrapper.DatabaseName("mydb"),

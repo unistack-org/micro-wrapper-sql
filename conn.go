@@ -13,9 +13,11 @@ var _ driver.Conn = &wrapperConn{}
 
 // wrapperConn defines a wrapper for driver.Conn
 type wrapperConn struct {
-	conn driver.Conn
-	opts Options
-	ctx  context.Context
+	d     *wrapperDriver
+	dname string
+	conn  driver.Conn
+	opts  Options
+	ctx   context.Context
 }
 
 // Prepare implements driver.Conn Prepare
@@ -243,10 +245,7 @@ func (w *wrapperConn) Exec(query string, args []driver.Value) (driver.Result, er
 	// nolint:staticcheck
 	execer, ok := w.conn.(driver.Execer)
 	if !ok {
-		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Exec", labelUnknown, 0, ErrUnsupported)...).Log(ctx, w.opts.LoggerLevel)
-		}
-		return nil, ErrUnsupported
+		return nil, driver.ErrSkip
 	}
 
 	labels := []string{labelMethod, "Exec", labelQuery, labelUnknown}
@@ -341,10 +340,11 @@ func (w *wrapperConn) ExecContext(ctx context.Context, query string, args []driv
 func (w *wrapperConn) Ping(ctx context.Context) error {
 	conn, ok := w.conn.(driver.Pinger)
 	if !ok {
-		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Ping", labelUnknown, 0, ErrUnsupported)...).Log(ctx, w.opts.LoggerLevel)
+		wc, err := w.d.Open(w.dname)
+		if err != nil {
+			return err
 		}
-		return ErrUnsupported
+		return wc.Close()
 	}
 
 	var nctx context.Context
@@ -389,10 +389,7 @@ func (w *wrapperConn) Query(query string, args []driver.Value) (driver.Rows, err
 	//nolint:staticcheck
 	conn, ok := w.conn.(driver.Queryer)
 	if !ok {
-		if w.opts.LoggerEnabled {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Query", labelUnknown, 0, ErrUnsupported)...).Log(ctx, w.opts.LoggerLevel)
-		}
-		return nil, ErrUnsupported
+		return nil, driver.ErrSkip
 	}
 
 	labels := []string{labelMethod, "Query", labelQuery, labelUnknown}
