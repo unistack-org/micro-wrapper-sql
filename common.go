@@ -6,9 +6,6 @@ import (
 	"fmt"
 )
 
-// ErrUnsupported is an error returned when the underlying driver doesn't provide a given function.
-var ErrUnsupported = errors.New("operation unsupported by the underlying driver")
-
 // namedValueToValue converts driver arguments of NamedValue format to Value format. Implemented in the same way as in
 // database/sql ctxutil.go.
 func namedValueToValue(named []driver.NamedValue) ([]driver.Value, error) {

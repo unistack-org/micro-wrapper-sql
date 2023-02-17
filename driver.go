@@ -32,5 +32,5 @@ func (w *wrapperDriver) Open(name string) (driver.Conn, error) {
 		return nil, err
 	}
 
-	return &wrapperConn{conn: c, opts: w.opts, ctx: w.ctx}, nil
+	return &wrapperConn{d: w, dname: name, conn: c, opts: w.opts, ctx: w.ctx}, nil
 }
