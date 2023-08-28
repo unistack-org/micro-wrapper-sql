@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"go.unistack.org/micro/v4/tracer"
+	"go.unistack.org/micro/v3/tracer"
 )
 
 var (
