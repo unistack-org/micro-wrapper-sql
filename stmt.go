@@ -75,8 +75,7 @@ func (w *wrapperStmt) Exec(args []driver.Value) (driver.Result, error) {
 	}
 	labels := []string{labelMethod, "Exec"}
 	ts := time.Now()
-	// nolint:staticcheck
-	res, err := w.stmt.Exec(args)
+	res, err := w.stmt.Exec(args) // nolint:staticcheck
 	td := time.Since(ts)
 	te := td.Seconds()
 	if err != nil {
