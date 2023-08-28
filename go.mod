@@ -1,5 +1,5 @@
-module go.unistack.org/micro-wrapper-sql/v3
+module go.unistack.org/micro-wrapper-sql/v4
 
-go 1.16
+go 1.19
 
-require go.unistack.org/micro/v3 v3.10.14
+require go.unistack.org/micro/v4 v4.0.3

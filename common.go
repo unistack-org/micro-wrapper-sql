@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+//go:generate sh -c "go run gen.go > wrap_gen.go"
+
 // namedValueToValue converts driver arguments of NamedValue format to Value format. Implemented in the same way as in
 // database/sql ctxutil.go.
 func namedValueToValue(named []driver.NamedValue) ([]driver.Value, error) {
