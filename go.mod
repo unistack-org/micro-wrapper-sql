@@ -1,5 +1,5 @@
-module gitlab.mtsbank.ru/service-platform/framework/framework-modules/micro-wrapper-sql
+module go.unistack.org/micro-wrapper-sql/v3
 
-go 1.18
+go 1.20
 
 require go.unistack.org/micro/v3 v3.10.25
