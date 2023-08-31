@@ -66,7 +66,7 @@ func main() {
 			continue
 		}
 		h := getHash(ifaces)
-		b.WriteString(fmt.Sprintf("\tif v, ok := dc.(wrapConn%04d_%s); ok {\n", n, h))
+		b.WriteString(fmt.Sprintf("\tif _, ok := dc.(wrapConn%04d_%s); ok {\n", n, h))
 		b.WriteString("\treturn struct {\n")
 		b.WriteString("\t\tdriver.Conn\n")
 		b.WriteString(fmt.Sprintf("\t\t\t%s", strings.Join(ifaces, "\n\t\t\t")))
@@ -74,14 +74,14 @@ func main() {
 		for idx := range ifaces {
 			if idx > 0 {
 				b.WriteString(", ")
-				b.WriteString("v")
+				b.WriteString("c")
 			} else if idx == 0 {
 				b.WriteString("c")
 			} else {
-				b.WriteString("v")
+				b.WriteString("c")
 			}
 		}
-		b.WriteString(", v}\n")
+		b.WriteString(", c}\n")
 		b.WriteString("}\n\n")
 	}
 	b.WriteString("return c\n")
@@ -112,7 +112,7 @@ func main() {
 			continue
 		}
 		h := getHash(ifaces)
-		b.WriteString(fmt.Sprintf("\tif v, ok := stmt.(wrapStmt%04d_%s); ok {\n", n, h))
+		b.WriteString(fmt.Sprintf("\tif _, ok := stmt.(wrapStmt%04d_%s); ok {\n", n, h))
 		b.WriteString("\treturn struct {\n")
 		b.WriteString("\t\tdriver.Stmt\n")
 		b.WriteString(fmt.Sprintf("\t\t\t%s", strings.Join(ifaces, "\n\t\t\t")))
@@ -120,14 +120,14 @@ func main() {
 		for idx := range ifaces {
 			if idx > 0 {
 				b.WriteString(", ")
-				b.WriteString("v")
+				b.WriteString("c")
 			} else if idx == 0 {
 				b.WriteString("c")
 			} else {
-				b.WriteString("v")
+				b.WriteString("c")
 			}
 		}
-		b.WriteString(", v}\n")
+		b.WriteString(", c}\n")
 		b.WriteString("}\n\n")
 	}
 	b.WriteString("return c\n")

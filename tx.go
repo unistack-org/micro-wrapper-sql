@@ -26,14 +26,13 @@ func (w *wrapperTx) Commit() error {
 
 	if w.span != nil {
 		if err != nil {
-			w.span.AddLabels("error", true)
-			w.span.AddLabels("err", err.Error())
+			w.span.SetStatus(tracer.SpanStatusError, err.Error())
 		}
 		w.span.Finish()
 	}
 
 	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(w.ctx, "Commit", labelUnknown, td, err)...).Log(w.ctx, w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(w.ctx, "Commit", getCallerName(), td, err)).Log(w.ctx, w.opts.LoggerLevel)
 	}
 
 	w.ctx = nil
@@ -49,14 +48,13 @@ func (w *wrapperTx) Rollback() error {
 
 	if w.span != nil {
 		if err != nil {
-			w.span.AddLabels("error", true)
-			w.span.AddLabels("err", err.Error())
+			w.span.SetStatus(tracer.SpanStatusError, err.Error())
 		}
 		w.span.Finish()
 	}
 
 	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(w.ctx, "Rollback", labelUnknown, td, err)...).Log(w.ctx, w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(w.ctx, "Rollback", getCallerName(), td, err)).Log(w.ctx, w.opts.LoggerLevel)
 	}
 
 	w.ctx = nil
