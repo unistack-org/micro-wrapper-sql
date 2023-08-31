@@ -24,16 +24,9 @@ type conn interface {
 
 // wrapperDriver defines a wrapper for driver.Driver
 type wrapperDriver struct {
-	driver    driver.Driver
-	connector driver.Connector
-	opts      Options
-	ctx       context.Context
-}
-
-type wrapperConnector struct {
 	driver driver.Driver
-	name   string
 	opts   Options
+	ctx    context.Context
 }
 
 // NewWrapper creates and returns a new SQL driver with passed capabilities
@@ -41,17 +34,26 @@ func NewWrapper(d driver.Driver, opts ...Option) driver.Driver {
 	return &wrapperDriver{driver: d, opts: NewOptions(opts...), ctx: context.Background()}
 }
 
-/*
+type wrappedConnector struct {
+	connector driver.Connector
+	name      string
+	opts      Options
+	ctx       context.Context
+}
+
+func NewWrapperConnector(c driver.Connector, opts ...Option) driver.Connector {
+	return &wrappedConnector{connector: c, opts: NewOptions(opts...), ctx: context.Background()}
+}
+
 // Connect implements driver.Driver Connect
-func (w *wrapperConnector) Connect(ctx context.Context) (driver.Conn, error) {
-	return w.driver.Connect(ctx)
+func (w *wrappedConnector) Connect(ctx context.Context) (driver.Conn, error) {
+	return w.connector.Connect(ctx)
 }
 
 // Driver implements driver.Driver Driver
-func (w *wrapperConnector) Driver() driver.Driver {
-	return w.driver
+func (w *wrappedConnector) Driver() driver.Driver {
+	return w.connector.Driver()
 }
-*/
 
 /*
 // Connect implements driver.Driver OpenConnector
@@ -78,7 +80,7 @@ func (w *wrapperDriver) Open(name string) (driver.Conn, error) {
 	td := time.Since(ts)
 
 	if w.opts.LoggerEnabled {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(w.ctx, "Open", labelUnknown, td, err)...).Log(w.ctx, w.opts.LoggerLevel)
+		w.opts.Logger.Fields(w.opts.LoggerObserver(w.ctx, "Open", getCallerName(), td, err)...).Log(w.ctx, w.opts.LoggerLevel)
 	}
 	if err != nil {
 		return nil, err
