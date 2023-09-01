@@ -17,7 +17,7 @@ var (
 	DefaultMeterMetricPrefix = "micro_sql_"
 	// DefaultLoggerObserver used to prepare labels for logger
 	DefaultLoggerObserver = func(ctx context.Context, method string, query string, td time.Duration, err error) []interface{} {
-		labels := []interface{}{"method", method, "took", fmt.Sprintf("%v", td)}
+		labels := []interface{}{"db.method", method, "took", fmt.Sprintf("%v", td)}
 		if err != nil {
 			labels = append(labels, "error", err.Error())
 		}
@@ -29,18 +29,18 @@ var (
 )
 
 var (
-	MaxOpenConnections = "max_open_connections"
-	OpenConnections    = "open_connections"
-	InuseConnections   = "inuse_connections"
-	IdleConnections    = "idle_connections"
-	WaitConnections    = "wait_connections"
+	MaxOpenConnections = "max_open_conn"
+	OpenConnections    = "open_conn"
+	InuseConnections   = "inuse_conn"
+	IdleConnections    = "idle_conn"
+	WaitConnections    = "waited_conn"
 	BlockedSeconds     = "blocked_seconds"
 	MaxIdleClosed      = "max_idle_closed"
-	MaxIdletimeClosed  = "max_idletime_closed"
-	MaxLifetimeClosed  = "max_lifetime_closed"
+	MaxIdletimeClosed  = "closed_max_idle"
+	MaxLifetimeClosed  = "closed_max_lifetime"
 
 	meterRequestTotal               = "request_total"
-	meterRequestLatencyMicroseconds = "request_latency_microseconds"
+	meterRequestLatencyMicroseconds = "latency_microseconds"
 	meterRequestDurationSeconds     = "request_duration_seconds"
 
 	labelUnknown  = "unknown"
@@ -78,7 +78,7 @@ func NewOptions(opts ...Option) Options {
 		Tracer:             tracer.DefaultTracer,
 		MeterStatsInterval: DefaultMeterStatsInterval,
 		MeterMetricPrefix:  DefaultMeterMetricPrefix,
-		LoggerLevel:        logger.DebugLevel,
+		LoggerLevel:        logger.ErrorLevel,
 		LoggerObserver:     DefaultLoggerObserver,
 	}
 	for _, o := range opts {
@@ -177,8 +177,8 @@ func QueryName(ctx context.Context, name string) context.Context {
 }
 
 func getQueryName(ctx context.Context) string {
-	if v, ok := ctx.Value(queryNameKey{}).(string); ok {
+	if v, ok := ctx.Value(queryNameKey{}).(string); ok && v != labelUnknown {
 		return v
 	}
-	return ""
+	return getCallerName()
 }

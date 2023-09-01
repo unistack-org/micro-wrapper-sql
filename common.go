@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"runtime"
 )
 
 //go:generate sh -c "go run gen.go > wrap_gen.go"
@@ -31,7 +32,20 @@ func namedValueToLabels(named []driver.NamedValue) []interface{} {
 		} else {
 			name = fmt.Sprintf("$%d", param.Ordinal)
 		}
-		largs = append(largs, fmt.Sprintf("%s=%s", name, param.Value))
+		largs = append(largs, fmt.Sprintf("%s=%v", name, param.Value))
 	}
 	return largs
+}
+
+// getCallerName get the name of the function A where A() -> B() -> GetFunctionCallerName()
+func getCallerName() string {
+	pc, _, _, ok := runtime.Caller(3)
+	details := runtime.FuncForPC(pc)
+	var callerName string
+	if ok && details != nil {
+		callerName = details.Name()
+	} else {
+		callerName = labelUnknown
+	}
+	return callerName
 }
