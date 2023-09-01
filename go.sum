@@ -1,2 +1,4 @@
-go.unistack.org/micro/v4 v4.0.3 h1:AFr21ua3IrkuxH26kNYVrs7Kpsrm+4aylE/PfjLdCWM=
-go.unistack.org/micro/v4 v4.0.3/go.mod h1:+wBa98rSf+mRXb/MuSVFPXtDrqN0k8rzPQiC8wRCwCo=
+go.unistack.org/micro-wrapper-requestid/v4 v4.0.3 h1:LhloK8yLLsov4XiKw9i20wdBUfvWCG1TaBNgNVtNa8Q=
+go.unistack.org/micro-wrapper-requestid/v4 v4.0.3/go.mod h1:vRIkCMyhbBVus1xQlr/Fef65n07znrBGkpSCpjkEiqk=
+go.unistack.org/micro/v4 v4.0.8 h1:D5n18+fhyRjJkKSPdIcW1ratWUuzy9TzrS5ud/qImWg=
+go.unistack.org/micro/v4 v4.0.8/go.mod h1:QT3gOIE4qGgBiQGm2Pad/62Sl5R53QfrgYHD448aX14=

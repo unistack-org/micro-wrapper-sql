@@ -1,4 +1,4 @@
-package wrapper // import "go.unistack.org/micro-wrapper-sql-1/v3"
+package wrapper // import "go.unistack.org/micro-wrapper-sql/v4"
 
 import (
 	"context"

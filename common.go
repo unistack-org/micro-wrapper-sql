@@ -39,7 +39,7 @@ func namedValueToLabels(named []driver.NamedValue) []interface{} {
 
 // getCallerName get the name of the function A where A() -> B() -> GetFunctionCallerName()
 func getCallerName() string {
-	pc, _, _, ok := runtime.Caller(2)
+	pc, _, _, ok := runtime.Caller(3)
 	details := runtime.FuncForPC(pc)
 	var callerName string
 	if ok && details != nil {
