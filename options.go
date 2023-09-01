@@ -17,7 +17,7 @@ var (
 	DefaultMeterMetricPrefix = "micro_sql_"
 	// DefaultLoggerObserver used to prepare labels for logger
 	DefaultLoggerObserver = func(ctx context.Context, method string, query string, td time.Duration, err error) []interface{} {
-		labels := []interface{}{"method", method, "took", fmt.Sprintf("%v", td)}
+		labels := []interface{}{"db.method", method, "took", fmt.Sprintf("%v", td)}
 		if err != nil {
 			labels = append(labels, "error", err.Error())
 		}
@@ -44,13 +44,13 @@ var (
 	meterRequestDurationSeconds     = "request_duration_seconds"
 
 	labelUnknown  = "unknown"
-	labelQuery    = "query"
-	labelMethod   = "method"
+	labelQuery    = "db.statement"
+	labelMethod   = "db.method"
 	labelStatus   = "status"
 	labelSuccess  = "success"
 	labelFailure  = "failure"
-	labelHost     = "db_host"
-	labelDatabase = "db_name"
+	labelHost     = "db.host"
+	labelDatabase = "db.name"
 )
 
 // Options struct holds wrapper options
@@ -180,5 +180,5 @@ func getQueryName(ctx context.Context) string {
 	if v, ok := ctx.Value(queryNameKey{}).(string); ok && v != labelUnknown {
 		return v
 	}
-	return ""
+	return getCallerName()
 }

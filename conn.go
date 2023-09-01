@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	requestid "go.unistack.org/micro-wrapper-requestid/v3"
 	"go.unistack.org/micro/v3/tracer"
 )
 
@@ -99,12 +100,11 @@ func (w *wrapperConn) Begin() (driver.Tx, error) {
 // BeginTx implements driver.ConnBeginTx BeginTx
 func (w *wrapperConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
 	nctx, span := w.opts.Tracer.Start(ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
-	span.AddLabels("method", "BeginTx")
+	span.AddLabels("db.method", "BeginTx")
 	name := getQueryName(ctx)
-	if name != "" {
-		span.AddLabels("db.query", name)
-	} else {
-		name = getCallerName()
+	span.AddLabels("db.statement", name)
+	if id, ok := ctx.Value(requestid.XRequestIDKey).(string); ok {
+		span.AddLabels("x-request-id", id)
 	}
 	labels := []string{labelMethod, "BeginTx", labelQuery, name}
 
@@ -178,14 +178,12 @@ func (w *wrapperConn) PrepareContext(ctx context.Context, query string) (driver.
 	} else {
 		nctx, span = w.opts.Tracer.Start(ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
 	}
-	span.AddLabels("method", "PrepareContext")
+	span.AddLabels("db.method", "PrepareContext")
 	name := getQueryName(ctx)
-	if name != "" {
-		span.AddLabels("db.query", name)
-	} else {
-		name = getCallerName()
+	span.AddLabels("db.statement", name)
+	if id, ok := ctx.Value(requestid.XRequestIDKey).(string); ok {
+		span.AddLabels("x-request-id", id)
 	}
-
 	labels := []string{labelMethod, "PrepareContext", labelQuery, name}
 	conn, ok := w.conn.(driver.ConnPrepareContext)
 	if !ok {
@@ -259,12 +257,11 @@ func (w *wrapperConn) ExecContext(ctx context.Context, query string, args []driv
 	} else {
 		nctx, span = w.opts.Tracer.Start(ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
 	}
-	span.AddLabels("method", "ExecContext")
+	span.AddLabels("db.method", "ExecContext")
 	name := getQueryName(ctx)
-	if name != "" {
-		span.AddLabels("db.query", name)
-	} else {
-		name = getCallerName()
+	span.AddLabels("db.statement", name)
+	if id, ok := ctx.Value(requestid.XRequestIDKey).(string); ok {
+		span.AddLabels("x-request-id", id)
 	}
 	defer span.Finish()
 	if len(args) > 0 {
@@ -382,12 +379,11 @@ func (w *wrapperConn) QueryContext(ctx context.Context, query string, args []dri
 	} else {
 		nctx, span = w.opts.Tracer.Start(ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
 	}
-	span.AddLabels("method", "QueryContext")
+	span.AddLabels("db.method", "QueryContext")
 	name := getQueryName(ctx)
-	if name != "" {
-		span.AddLabels("db.statement", name)
-	} else {
-		name = getCallerName()
+	span.AddLabels("db.statement", name)
+	if id, ok := ctx.Value(requestid.XRequestIDKey).(string); ok {
+		span.AddLabels("x-request-id", id)
 	}
 	defer span.Finish()
 	if len(args) > 0 {

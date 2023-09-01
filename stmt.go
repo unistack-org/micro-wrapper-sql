@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	requestid "go.unistack.org/micro-wrapper-requestid/v3"
 	"go.unistack.org/micro/v3/tracer"
 )
 
@@ -140,16 +141,15 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, args []driver.NamedValue)
 	} else {
 		nctx, span = w.opts.Tracer.Start(ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
 	}
-	span.AddLabels("method", "ExecContext")
+	span.AddLabels("db.method", "ExecContext")
 	name := getQueryName(ctx)
-	if name != "" {
-		span.AddLabels("db.query", name)
-	} else {
-		name = getCallerName()
-	}
+	span.AddLabels("db.statement", name)
 	defer span.Finish()
 	if len(args) > 0 {
 		span.AddLabels("db.args", fmt.Sprintf("%v", namedValueToLabels(args)))
+	}
+	if id, ok := ctx.Value(requestid.XRequestIDKey).(string); ok {
+		span.AddLabels("x-request-id", id)
 	}
 	labels := []string{labelMethod, "ExecContext", labelQuery, name}
 
@@ -214,16 +214,15 @@ func (w *wrapperStmt) QueryContext(ctx context.Context, args []driver.NamedValue
 	} else {
 		nctx, span = w.opts.Tracer.Start(ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
 	}
-	span.AddLabels("method", "QueryContext")
+	span.AddLabels("db.method", "QueryContext")
 	name := getQueryName(ctx)
-	if name != "" {
-		span.AddLabels("db.query", name)
-	} else {
-		name = getCallerName()
-	}
+	span.AddLabels("db.statement", name)
 	defer span.Finish()
 	if len(args) > 0 {
 		span.AddLabels("db.args", fmt.Sprintf("%v", namedValueToLabels(args)))
+	}
+	if id, ok := ctx.Value(requestid.XRequestIDKey).(string); ok {
+		span.AddLabels("x-request-id", id)
 	}
 	labels := []string{labelMethod, "QueryContext", labelQuery, name}
 	if conn, ok := w.stmt.(driver.StmtQueryContext); ok {
