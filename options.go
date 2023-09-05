@@ -44,13 +44,13 @@ var (
 	meterRequestDurationSeconds     = "request_duration_seconds"
 
 	labelUnknown  = "unknown"
-	labelQuery    = "db.statement"
-	labelMethod   = "db.method"
+	labelQuery    = "db_statement"
+	labelMethod   = "db_method"
 	labelStatus   = "status"
 	labelSuccess  = "success"
 	labelFailure  = "failure"
-	labelHost     = "db.host"
-	labelDatabase = "db.name"
+	labelHost     = "db_host"
+	labelDatabase = "db_name"
 )
 
 // Options struct holds wrapper options
