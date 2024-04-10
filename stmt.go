@@ -47,7 +47,7 @@ func (w *wrapperStmt) Close() error {
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Close", getCallerName(), td, err)).Log(ctx, w.opts.LoggerLevel)
+		w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "Close", getCallerName(), td, err)...)
 	}
 	return err
 }
@@ -88,7 +88,7 @@ func (w *wrapperStmt) Exec(args []driver.Value) (driver.Result, error) {
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Exec", getCallerName(), td, err)).Log(ctx, w.opts.LoggerLevel)
+		w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "Exec", getCallerName(), td, err)...)
 	}
 
 	return res, err
@@ -116,7 +116,7 @@ func (w *wrapperStmt) Query(args []driver.Value) (driver.Rows, error) {
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Query", getCallerName(), td, err)).Log(ctx, w.opts.LoggerLevel)
+		w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "Query", getCallerName(), td, err)...)
 	}
 
 	return rows, err
@@ -168,7 +168,7 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, args []driver.NamedValue)
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "ExecContext", name, td, err)).Log(ctx, w.opts.LoggerLevel)
+			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "ExecContext", name, td, err)...)
 		}
 		return res, err
 	}
@@ -179,7 +179,7 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, args []driver.NamedValue)
 		span.SetStatus(tracer.SpanStatusError, err.Error())
 
 		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "ExecContext", name, 0, err)).Log(ctx, w.opts.LoggerLevel)
+			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "ExecContext", name, 0, err)...)
 		}
 		return nil, err
 	}
@@ -198,7 +198,7 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, args []driver.NamedValue)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "ExecContext", name, td, err)).Log(ctx, w.opts.LoggerLevel)
+		w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "ExecContext", name, td, err)...)
 	}
 
 	return res, err
@@ -241,7 +241,7 @@ func (w *wrapperStmt) QueryContext(ctx context.Context, args []driver.NamedValue
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "QueryContext", name, td, err)).Log(ctx, w.opts.LoggerLevel)
+			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "QueryContext", name, td, err)...)
 		}
 		return rows, err
 	}
@@ -253,7 +253,7 @@ func (w *wrapperStmt) QueryContext(ctx context.Context, args []driver.NamedValue
 		span.SetStatus(tracer.SpanStatusError, err.Error())
 
 		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-			w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "QueryContext", name, 0, err)).Log(ctx, w.opts.LoggerLevel)
+			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "QueryContext", name, 0, err)...)
 		}
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func (w *wrapperStmt) QueryContext(ctx context.Context, args []driver.NamedValue
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
 	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "QueryContext", name, td, err)).Log(ctx, w.opts.LoggerLevel)
+		w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "QueryContext", name, td, err)...)
 	}
 
 	return rows, err

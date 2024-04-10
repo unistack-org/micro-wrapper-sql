@@ -32,7 +32,7 @@ func (w *wrapperTx) Commit() error {
 	}
 
 	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(w.ctx, "Commit", getCallerName(), td, err)).Log(w.ctx, w.opts.LoggerLevel)
+		w.opts.Logger.Log(w.ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(w.ctx, "Commit", getCallerName(), td, err)...)
 	}
 
 	w.ctx = nil
@@ -54,7 +54,7 @@ func (w *wrapperTx) Rollback() error {
 	}
 
 	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Fields(w.opts.LoggerObserver(w.ctx, "Rollback", getCallerName(), td, err)).Log(w.ctx, w.opts.LoggerLevel)
+		w.opts.Logger.Log(w.ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(w.ctx, "Rollback", getCallerName(), td, err)...)
 	}
 
 	w.ctx = nil
