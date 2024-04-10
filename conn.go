@@ -103,7 +103,7 @@ func (w *wrapperConn) BeginTx(ctx context.Context, opts driver.TxOptions) (drive
 	span.AddLabels("db.method", "BeginTx")
 	name := getQueryName(ctx)
 	span.AddLabels("db.statement", name)
-	if id, ok := ctx.Value(requestid.XRequestIDKey).(string); ok {
+	if id, ok := ctx.Value(requestid.XRequestIDKey{}).(string); ok {
 		span.AddLabels("x-request-id", id)
 	}
 	labels := []string{labelMethod, "BeginTx", labelQuery, name}
@@ -181,7 +181,7 @@ func (w *wrapperConn) PrepareContext(ctx context.Context, query string) (driver.
 	span.AddLabels("db.method", "PrepareContext")
 	name := getQueryName(ctx)
 	span.AddLabels("db.statement", name)
-	if id, ok := ctx.Value(requestid.XRequestIDKey).(string); ok {
+	if id, ok := ctx.Value(requestid.XRequestIDKey{}).(string); ok {
 		span.AddLabels("x-request-id", id)
 	}
 	labels := []string{labelMethod, "PrepareContext", labelQuery, name}
@@ -260,7 +260,7 @@ func (w *wrapperConn) ExecContext(ctx context.Context, query string, args []driv
 	span.AddLabels("db.method", "ExecContext")
 	name := getQueryName(ctx)
 	span.AddLabels("db.statement", name)
-	if id, ok := ctx.Value(requestid.XRequestIDKey).(string); ok {
+	if id, ok := ctx.Value(requestid.XRequestIDKey{}).(string); ok {
 		span.AddLabels("x-request-id", id)
 	}
 	defer span.Finish()
@@ -382,7 +382,7 @@ func (w *wrapperConn) QueryContext(ctx context.Context, query string, args []dri
 	span.AddLabels("db.method", "QueryContext")
 	name := getQueryName(ctx)
 	span.AddLabels("db.statement", name)
-	if id, ok := ctx.Value(requestid.XRequestIDKey).(string); ok {
+	if id, ok := ctx.Value(requestid.XRequestIDKey{}).(string); ok {
 		span.AddLabels("x-request-id", id)
 	}
 	defer span.Finish()

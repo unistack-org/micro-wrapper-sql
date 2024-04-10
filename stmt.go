@@ -148,7 +148,7 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, args []driver.NamedValue)
 	if len(args) > 0 {
 		span.AddLabels("db.args", fmt.Sprintf("%v", namedValueToLabels(args)))
 	}
-	if id, ok := ctx.Value(requestid.XRequestIDKey).(string); ok {
+	if id, ok := ctx.Value(requestid.XRequestIDKey{}).(string); ok {
 		span.AddLabels("x-request-id", id)
 	}
 	labels := []string{labelMethod, "ExecContext", labelQuery, name}
@@ -221,7 +221,7 @@ func (w *wrapperStmt) QueryContext(ctx context.Context, args []driver.NamedValue
 	if len(args) > 0 {
 		span.AddLabels("db.args", fmt.Sprintf("%v", namedValueToLabels(args)))
 	}
-	if id, ok := ctx.Value(requestid.XRequestIDKey).(string); ok {
+	if id, ok := ctx.Value(requestid.XRequestIDKey{}).(string); ok {
 		span.AddLabels("x-request-id", id)
 	}
 	labels := []string{labelMethod, "QueryContext", labelQuery, name}
