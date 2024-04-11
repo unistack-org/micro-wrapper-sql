@@ -2,6 +2,8 @@ package wrapper
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -18,7 +20,7 @@ var (
 	// DefaultLoggerObserver used to prepare labels for logger
 	DefaultLoggerObserver = func(ctx context.Context, method string, query string, td time.Duration, err error) []interface{} {
 		labels := []interface{}{"db.method", method, "took", fmt.Sprintf("%v", td)}
-		if err != nil {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			labels = append(labels, "error", err.Error())
 		}
 		if query != labelUnknown {
