@@ -3,7 +3,6 @@ package wrapper
 import (
 	"context"
 	"database/sql/driver"
-	"errors"
 	"fmt"
 	"time"
 
@@ -149,8 +148,7 @@ func (w *wrapperConn) Prepare(query string) (driver.Stmt, error) {
 	stmt, err := w.conn.Prepare(query)
 	td := time.Since(ts)
 	te := td.Seconds()
-	compErr := errors.Is(err, driver.ErrSkip)
-	if err != nil && !compErr {
+	if err != nil {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelFailure)...).Inc()
 		w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
@@ -163,7 +161,7 @@ func (w *wrapperConn) Prepare(query string) (driver.Stmt, error) {
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) && !compErr {
+	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
 		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Prepare", getCallerName(), td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 
@@ -196,8 +194,7 @@ func (w *wrapperConn) PrepareContext(ctx context.Context, query string) (driver.
 	stmt, err := conn.PrepareContext(nctx, query)
 	td := time.Since(ts)
 	te := td.Seconds()
-	compErr := errors.Is(err, driver.ErrSkip)
-	if err != nil && !compErr {
+	if err != nil {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelFailure)...).Inc()
 		w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
@@ -210,7 +207,7 @@ func (w *wrapperConn) PrepareContext(ctx context.Context, query string) (driver.
 	w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelSuccess)...).Inc()
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) && !compErr {
+	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
 		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "PrepareContext", getCallerName(), td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 
@@ -237,15 +234,14 @@ func (w *wrapperConn) Exec(query string, args []driver.Value) (driver.Result, er
 	res, err := conn.Exec(query, args)
 	td := time.Since(ts)
 	te := td.Seconds()
-	compErr := errors.Is(err, driver.ErrSkip)
-	if err != nil && !compErr {
+	if err != nil {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelFailure)...).Inc()
 	} else {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelSuccess)...).Inc()
 	}
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) && !compErr {
+	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
 		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Exec", getCallerName(), td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	return res, err
@@ -283,8 +279,7 @@ func (w *wrapperConn) ExecContext(ctx context.Context, query string, args []driv
 	res, err := conn.ExecContext(nctx, query, args)
 	td := time.Since(ts)
 	te := td.Seconds()
-	compErr := errors.Is(err, driver.ErrSkip)
-	if err != nil && !compErr {
+	if err != nil {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelFailure)...).Inc()
 		span.SetStatus(tracer.SpanStatusError, err.Error())
 	} else {
@@ -293,7 +288,7 @@ func (w *wrapperConn) ExecContext(ctx context.Context, query string, args []driv
 	w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelSuccess)...).Inc()
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) && !compErr {
+	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
 		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "ExecContext", getCallerName(), td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 
@@ -361,15 +356,14 @@ func (w *wrapperConn) Query(query string, args []driver.Value) (driver.Rows, err
 	rows, err := conn.Query(query, args)
 	td := time.Since(ts)
 	te := td.Seconds()
-	compErr := errors.Is(err, driver.ErrSkip)
-	if err != nil && !compErr {
+	if err != nil {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelFailure)...).Inc()
 	} else {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelSuccess)...).Inc()
 	}
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) && !compErr {
+	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
 		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "Query", getCallerName(), td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 	return rows, err
@@ -405,8 +399,7 @@ func (w *wrapperConn) QueryContext(ctx context.Context, query string, args []dri
 	rows, err := conn.QueryContext(nctx, query, args)
 	td := time.Since(ts)
 	te := td.Seconds()
-	compErr := errors.Is(err, driver.ErrSkip)
-	if err != nil && !compErr {
+	if err != nil {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelFailure)...).Inc()
 		span.SetStatus(tracer.SpanStatusError, err.Error())
 	} else {
@@ -414,7 +407,7 @@ func (w *wrapperConn) QueryContext(ctx context.Context, query string, args []dri
 	}
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) && !compErr {
+	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
 		w.opts.Logger.Fields(w.opts.LoggerObserver(ctx, "QueryContext", getCallerName(), td, err)...).Log(ctx, w.opts.LoggerLevel)
 	}
 
