@@ -315,6 +315,7 @@ func (w *wrapperConn) Ping(ctx context.Context) error {
 	} else {
 		nctx, span = w.opts.Tracer.Start(ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
 	}
+	span.AddLabels("db.method", "Ping")
 	defer span.Finish()
 	labels := []string{labelMethod, "Ping"}
 	ts := time.Now()
