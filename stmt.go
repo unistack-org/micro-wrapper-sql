@@ -136,13 +136,13 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, args []driver.NamedValue)
 	var nctx context.Context
 	var span tracer.Span
 
+	name := getQueryName(ctx)
 	if w.ctx != nil {
-		nctx, span = w.opts.Tracer.Start(w.ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
+		nctx, span = w.opts.Tracer.Start(w.ctx, "sdk.database "+name, tracer.WithSpanKind(tracer.SpanKindClient))
 	} else {
-		nctx, span = w.opts.Tracer.Start(ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
+		nctx, span = w.opts.Tracer.Start(ctx, "sdk.database "+name, tracer.WithSpanKind(tracer.SpanKindClient))
 	}
 	span.AddLabels("db.method", "ExecContext")
-	name := getQueryName(ctx)
 	span.AddLabels("db.statement", name)
 	defer span.Finish()
 	if len(args) > 0 {
@@ -209,13 +209,13 @@ func (w *wrapperStmt) QueryContext(ctx context.Context, args []driver.NamedValue
 	var nctx context.Context
 	var span tracer.Span
 
+	name := getQueryName(ctx)
 	if w.ctx != nil {
-		nctx, span = w.opts.Tracer.Start(w.ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
+		nctx, span = w.opts.Tracer.Start(w.ctx, "sdk.database "+name, tracer.WithSpanKind(tracer.SpanKindClient))
 	} else {
-		nctx, span = w.opts.Tracer.Start(ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
+		nctx, span = w.opts.Tracer.Start(ctx, "sdk.database "+name, tracer.WithSpanKind(tracer.SpanKindClient))
 	}
 	span.AddLabels("db.method", "QueryContext")
-	name := getQueryName(ctx)
 	span.AddLabels("db.statement", name)
 	defer span.Finish()
 	if len(args) > 0 {
