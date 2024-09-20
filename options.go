@@ -13,8 +13,6 @@ import (
 var (
 	// DefaultMeterStatsInterval holds default stats interval
 	DefaultMeterStatsInterval = 5 * time.Second
-	// DefaultMeterMetricPrefix holds default metric prefix
-	DefaultMeterMetricPrefix = "micro_sql_"
 	// DefaultLoggerObserver used to prepare labels for logger
 	DefaultLoggerObserver = func(ctx context.Context, method string, query string, td time.Duration, err error) []interface{} {
 		labels := []interface{}{"db.method", method, "took", fmt.Sprintf("%v", td)}
@@ -29,19 +27,19 @@ var (
 )
 
 var (
-	MaxOpenConnections = "max_open_conn"
-	OpenConnections    = "open_conn"
-	InuseConnections   = "inuse_conn"
-	IdleConnections    = "idle_conn"
-	WaitConnections    = "waited_conn"
-	BlockedSeconds     = "blocked_seconds"
-	MaxIdleClosed      = "max_idle_closed"
-	MaxIdletimeClosed  = "closed_max_idle"
-	MaxLifetimeClosed  = "closed_max_lifetime"
+	MaxOpenConnections = "micro_sql_max_open_conn"
+	OpenConnections    = "micro_sql_open_conn"
+	InuseConnections   = "micro_sql_inuse_conn"
+	IdleConnections    = "micro_sql_idle_conn"
+	WaitConnections    = "micro_sql_waited_conn"
+	BlockedSeconds     = "micro_sql_blocked_seconds"
+	MaxIdleClosed      = "micro_sql_max_idle_closed"
+	MaxIdletimeClosed  = "micro_sql_closed_max_idle"
+	MaxLifetimeClosed  = "micro_sql_closed_max_lifetime"
 
-	meterRequestTotal               = "request_total"
-	meterRequestLatencyMicroseconds = "latency_microseconds"
-	meterRequestDurationSeconds     = "request_duration_seconds"
+	meterRequestTotal               = "micro_sql_request_total"
+	meterRequestLatencyMicroseconds = "micro_sql_latency_microseconds"
+	meterRequestDurationSeconds     = "micro_sql_request_duration_seconds"
 
 	labelUnknown  = "unknown"
 	labelQuery    = "db_statement"
@@ -60,7 +58,6 @@ type Options struct {
 	Tracer             tracer.Tracer
 	DatabaseHost       string
 	DatabaseName       string
-	MeterMetricPrefix  string
 	MeterStatsInterval time.Duration
 	LoggerLevel        logger.Level
 	LoggerEnabled      bool
@@ -77,7 +74,6 @@ func NewOptions(opts ...Option) Options {
 		Meter:              meter.DefaultMeter,
 		Tracer:             tracer.DefaultTracer,
 		MeterStatsInterval: DefaultMeterStatsInterval,
-		MeterMetricPrefix:  DefaultMeterMetricPrefix,
 		LoggerLevel:        logger.ErrorLevel,
 		LoggerObserver:     DefaultLoggerObserver,
 	}
@@ -86,7 +82,6 @@ func NewOptions(opts ...Option) Options {
 	}
 
 	options.Meter = options.Meter.Clone(
-		meter.MetricPrefix(options.MeterMetricPrefix),
 		meter.Labels(
 			labelHost, options.DatabaseHost,
 			labelDatabase, options.DatabaseName,
@@ -102,13 +97,6 @@ func NewOptions(opts ...Option) Options {
 func MetricInterval(td time.Duration) Option {
 	return func(o *Options) {
 		o.MeterStatsInterval = td
-	}
-}
-
-// MetricPrefix specifies prefix for each metric
-func MetricPrefix(pref string) Option {
-	return func(o *Options) {
-		o.MeterMetricPrefix = pref
 	}
 }
 
