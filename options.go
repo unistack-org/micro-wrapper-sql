@@ -88,7 +88,7 @@ func NewOptions(opts ...Option) Options {
 		),
 	)
 
-	options.Logger = options.Logger.Clone(logger.WithCallerSkipCount(1))
+	options.Logger = options.Logger.Clone(logger.WithAddCallerSkipCount(1))
 
 	return options
 }

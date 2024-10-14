@@ -78,10 +78,12 @@ func (w *wrapperDriver) Open(name string) (driver.Conn, error) {
 	ts := time.Now()
 	c, err := w.driver.Open(name)
 	td := time.Since(ts)
-
-	if w.opts.LoggerEnabled {
-		w.opts.Logger.Log(w.ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(w.ctx, "Open", getCallerName(), td, err)...)
-	}
+	/*
+		if w.opts.LoggerEnabled {
+			w.opts.Logger.Log(w.ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(w.ctx, "Open", getCallerName(), td, err)...)
+		}
+	*/
+	_ = td
 	if err != nil {
 		return nil, err
 	}

@@ -33,6 +33,7 @@ func (w *wrapperStmt) Close() error {
 	} else {
 		ctx = context.Background()
 	}
+	_ = ctx
 	labels := []string{labelMethod, "Close"}
 	ts := time.Now()
 	err := w.stmt.Close()
@@ -45,10 +46,11 @@ func (w *wrapperStmt) Close() error {
 	}
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "Close", getCallerName(), td, err)...)
-	}
+	/*
+		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
+			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "Close", getCallerName(), td, err)...)
+		}
+	*/
 	return err
 }
 
@@ -74,6 +76,7 @@ func (w *wrapperStmt) Exec(args []driver.Value) (driver.Result, error) {
 	} else {
 		ctx = context.Background()
 	}
+	_ = ctx
 	labels := []string{labelMethod, "Exec"}
 	ts := time.Now()
 	res, err := w.stmt.Exec(args) // nolint:staticcheck
@@ -86,11 +89,11 @@ func (w *wrapperStmt) Exec(args []driver.Value) (driver.Result, error) {
 	}
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "Exec", getCallerName(), td, err)...)
-	}
-
+	/*
+		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
+			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "Exec", getCallerName(), td, err)...)
+		}
+	*/
 	return res, err
 }
 
@@ -102,6 +105,7 @@ func (w *wrapperStmt) Query(args []driver.Value) (driver.Rows, error) {
 	} else {
 		ctx = context.Background()
 	}
+	_ = ctx
 	labels := []string{labelMethod, "Query"}
 	ts := time.Now()
 	rows, err := w.stmt.Query(args) // nolint:staticcheck
@@ -114,11 +118,11 @@ func (w *wrapperStmt) Query(args []driver.Value) (driver.Rows, error) {
 	}
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "Query", getCallerName(), td, err)...)
-	}
-
+	/*
+		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
+			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "Query", getCallerName(), td, err)...)
+		}
+	*/
 	return rows, err
 }
 
@@ -166,10 +170,11 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, args []driver.NamedValue)
 		}
 		w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-
-		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "ExecContext", name, td, err)...)
-		}
+		/*
+			if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
+				w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "ExecContext", name, td, err)...)
+			}
+		*/
 		return res, err
 	}
 
@@ -177,10 +182,11 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, args []driver.NamedValue)
 	if err != nil {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelFailure)...).Inc()
 		span.SetStatus(tracer.SpanStatusError, err.Error())
-
-		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "ExecContext", name, 0, err)...)
-		}
+		/*
+			if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
+				w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "ExecContext", name, 0, err)...)
+			}
+		*/
 		return nil, err
 	}
 	ts := time.Now()
@@ -196,11 +202,11 @@ func (w *wrapperStmt) ExecContext(ctx context.Context, args []driver.NamedValue)
 
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "ExecContext", name, td, err)...)
-	}
-
+	/*
+		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
+			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "ExecContext", name, td, err)...)
+		}
+	*/
 	return res, err
 }
 
@@ -239,10 +245,11 @@ func (w *wrapperStmt) QueryContext(ctx context.Context, args []driver.NamedValue
 
 		w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 		w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-
-		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "QueryContext", name, td, err)...)
-		}
+		/*
+			if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
+				w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "QueryContext", name, td, err)...)
+			}
+		*/
 		return rows, err
 	}
 
@@ -251,10 +258,11 @@ func (w *wrapperStmt) QueryContext(ctx context.Context, args []driver.NamedValue
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelFailure)...).Inc()
 
 		span.SetStatus(tracer.SpanStatusError, err.Error())
-
-		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "QueryContext", name, 0, err)...)
-		}
+		/*
+			if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
+				w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "QueryContext", name, 0, err)...)
+			}
+		*/
 		return nil, err
 	}
 	ts := time.Now()
@@ -270,10 +278,10 @@ func (w *wrapperStmt) QueryContext(ctx context.Context, args []driver.NamedValue
 
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "QueryContext", name, td, err)...)
-	}
-
+	/*
+		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
+			w.opts.Logger.Log(ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(ctx, "QueryContext", name, td, err)...)
+		}
+	*/
 	return rows, err
 }

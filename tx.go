@@ -23,18 +23,18 @@ func (w *wrapperTx) Commit() error {
 	ts := time.Now()
 	err := w.tx.Commit()
 	td := time.Since(ts)
-
+	_ = td
 	if w.span != nil {
 		if err != nil {
 			w.span.SetStatus(tracer.SpanStatusError, err.Error())
 		}
 		w.span.Finish()
 	}
-
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Log(w.ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(w.ctx, "Commit", getCallerName(), td, err)...)
-	}
-
+	/*
+		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
+			w.opts.Logger.Log(w.ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(w.ctx, "Commit", getCallerName(), td, err)...)
+		}
+	*/
 	w.ctx = nil
 
 	return err
@@ -45,18 +45,18 @@ func (w *wrapperTx) Rollback() error {
 	ts := time.Now()
 	err := w.tx.Rollback()
 	td := time.Since(ts)
-
+	_ = td
 	if w.span != nil {
 		if err != nil {
 			w.span.SetStatus(tracer.SpanStatusError, err.Error())
 		}
 		w.span.Finish()
 	}
-
-	if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
-		w.opts.Logger.Log(w.ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(w.ctx, "Rollback", getCallerName(), td, err)...)
-	}
-
+	/*
+		if w.opts.LoggerEnabled && w.opts.Logger.V(w.opts.LoggerLevel) {
+			w.opts.Logger.Log(w.ctx, w.opts.LoggerLevel, w.opts.LoggerObserver(w.ctx, "Rollback", getCallerName(), td, err)...)
+		}
+	*/
 	w.ctx = nil
 
 	return err
