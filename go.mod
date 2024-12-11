@@ -5,8 +5,8 @@ go 1.22
 toolchain go1.23.2
 
 require (
-	go.unistack.org/micro-wrapper-requestid/v3 v3.9.2
-	go.unistack.org/micro/v3 v3.10.97
+	go.unistack.org/micro-wrapper-requestid/v3 v3.9.3
+	go.unistack.org/micro/v3 v3.11.14
 )
 
 require (
