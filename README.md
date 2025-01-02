@@ -54,8 +54,6 @@ func Connect(cfg *PostgresConfig) (*sqlx.DB, error) {
 	sql.Register("micro-wrapper-sql", wrapper.NewWrapper(&sqlite.Driver{},
 		wrapper.DatabaseHost("localhost"),
 		wrapper.DatabaseName("mydb"),
-		wrapper.LoggerLevel(logger.DebugLevel),
-		wrapper.LoggerEnabled(true),
 	))
 
   wdb, err := sql.Open("micro-wrapper-sql", dsn)

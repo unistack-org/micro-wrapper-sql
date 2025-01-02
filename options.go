@@ -2,7 +2,6 @@ package wrapper
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"go.unistack.org/micro/v3/logger"
@@ -10,21 +9,8 @@ import (
 	"go.unistack.org/micro/v3/tracer"
 )
 
-var (
-	// DefaultMeterStatsInterval holds default stats interval
-	DefaultMeterStatsInterval = 5 * time.Second
-	// DefaultLoggerObserver used to prepare labels for logger
-	DefaultLoggerObserver = func(ctx context.Context, method string, query string, td time.Duration, err error) []interface{} {
-		labels := []interface{}{"db.method", method, "took", fmt.Sprintf("%v", td)}
-		if err != nil {
-			labels = append(labels, "error", err.Error())
-		}
-		if query != labelUnknown {
-			labels = append(labels, "query", query)
-		}
-		return labels
-	}
-)
+// DefaultMeterStatsInterval holds default stats interval
+var DefaultMeterStatsInterval = 5 * time.Second
 
 var (
 	MaxOpenConnections = "micro_sql_max_open_conn"
@@ -53,7 +39,6 @@ var (
 
 // Options struct holds wrapper options
 type Options struct {
-	Logger             logger.Logger
 	Meter              meter.Meter
 	Tracer             tracer.Tracer
 	DatabaseHost       string
@@ -70,12 +55,9 @@ type Option func(*Options)
 // NewOptions create new Options struct from provided option slice
 func NewOptions(opts ...Option) Options {
 	options := Options{
-		Logger:             logger.DefaultLogger,
 		Meter:              meter.DefaultMeter,
 		Tracer:             tracer.DefaultTracer,
 		MeterStatsInterval: DefaultMeterStatsInterval,
-		LoggerLevel:        logger.ErrorLevel,
-		LoggerObserver:     DefaultLoggerObserver,
 	}
 	for _, o := range opts {
 		o(&options)
@@ -87,8 +69,6 @@ func NewOptions(opts ...Option) Options {
 			labelDatabase, options.DatabaseName,
 		),
 	)
-
-	options.Logger = options.Logger.Clone(logger.WithAddCallerSkipCount(1))
 
 	return options
 }
@@ -116,34 +96,6 @@ func DatabaseName(name string) Option {
 func Meter(m meter.Meter) Option {
 	return func(o *Options) {
 		o.Meter = m
-	}
-}
-
-// Logger passes logger.Logger to wrapper
-func Logger(l logger.Logger) Option {
-	return func(o *Options) {
-		o.Logger = l
-	}
-}
-
-// LoggerEnabled enable sql logging
-func LoggerEnabled(b bool) Option {
-	return func(o *Options) {
-		o.LoggerEnabled = b
-	}
-}
-
-// LoggerLevel passes logger.Level option
-func LoggerLevel(lvl logger.Level) Option {
-	return func(o *Options) {
-		o.LoggerLevel = lvl
-	}
-}
-
-// LoggerObserver passes observer to fill logger fields
-func LoggerObserver(obs func(context.Context, string, string, time.Duration, error) []interface{}) Option {
-	return func(o *Options) {
-		o.LoggerObserver = obs
 	}
 }
 
