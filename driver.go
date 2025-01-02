@@ -11,16 +11,16 @@ var (
 // _ driver.Connector     = (*wrapperDriver)(nil)
 )
 
+/*
 type conn interface {
 	driver.Pinger
-	driver.Execer
 	driver.ExecerContext
-	driver.Queryer
 	driver.QueryerContext
 	driver.Conn
 	driver.ConnPrepareContext
 	driver.ConnBeginTx
 }
+*/
 
 // wrapperDriver defines a wrapper for driver.Driver
 type wrapperDriver struct {
@@ -36,9 +36,9 @@ func NewWrapper(d driver.Driver, opts ...Option) driver.Driver {
 
 type wrappedConnector struct {
 	connector driver.Connector
-	name      string
-	opts      Options
-	ctx       context.Context
+	//	name      string
+	opts Options
+	ctx  context.Context
 }
 
 func NewWrapperConnector(c driver.Connector, opts ...Option) driver.Connector {

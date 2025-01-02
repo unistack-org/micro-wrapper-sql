@@ -16,9 +16,7 @@ var (
 	_ driver.ConnPrepareContext = (*wrapperConn)(nil)
 	_ driver.Pinger             = (*wrapperConn)(nil)
 	_ driver.Validator          = (*wrapperConn)(nil)
-	_ driver.Queryer            = (*wrapperConn)(nil) // nolint:staticcheck
 	_ driver.QueryerContext     = (*wrapperConn)(nil)
-	_ driver.Execer             = (*wrapperConn)(nil) // nolint:staticcheck
 	_ driver.ExecerContext      = (*wrapperConn)(nil)
 	//	_ driver.Connector
 	//	_ driver.Driver
@@ -32,7 +30,7 @@ type wrapperConn struct {
 	conn  driver.Conn
 	opts  Options
 	ctx   context.Context
-	span  tracer.Span
+	// span  tracer.Span
 }
 
 // Close implements driver.Conn Close
@@ -190,38 +188,6 @@ func (w *wrapperConn) PrepareContext(ctx context.Context, query string) (driver.
 	return wrapStmt(stmt, query, w.opts), nil
 }
 
-// Exec implements driver.Execer Exec
-func (w *wrapperConn) Exec(query string, args []driver.Value) (driver.Result, error) {
-	var ctx context.Context
-	if w.ctx != nil {
-		ctx = w.ctx
-	} else {
-		ctx = context.Background()
-	}
-	_ = ctx
-	labels := []string{labelMethod, "Exec", labelQuery, getCallerName()}
-
-	// nolint:staticcheck
-	conn, ok := w.conn.(driver.Execer)
-	if !ok {
-		return nil, driver.ErrSkip
-	}
-
-	ts := time.Now()
-	res, err := conn.Exec(query, args)
-	td := time.Since(ts)
-	te := td.Seconds()
-	if err != nil {
-		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelFailure)...).Inc()
-	} else {
-		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelSuccess)...).Inc()
-	}
-	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
-	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
-
-	return res, err
-}
-
 // Exec implements driver.StmtExecContext ExecContext
 func (w *wrapperConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
 	var nctx context.Context
@@ -280,27 +246,14 @@ func (w *wrapperConn) Ping(ctx context.Context) error {
 		return pc.Close()
 	}
 
-	var nctx context.Context
-	nctx = ctx
-	/*
-		var span tracer.Span
-		if w.ctx != nil {
-			nctx, span = w.opts.Tracer.Start(w.ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
-		} else {
-			nctx, span = w.opts.Tracer.Start(ctx, "sdk.database", tracer.WithSpanKind(tracer.SpanKindClient))
-		}
-		span.AddLabels("db.method", "Ping")
-		defer span.Finish()
-	*/
 	labels := []string{labelMethod, "Ping"}
 	ts := time.Now()
-	err := conn.Ping(nctx)
+	err := conn.Ping(ctx)
 	td := time.Since(ts)
 	te := td.Seconds()
 	if err != nil {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelFailure)...).Inc()
 		// span.SetStatus(tracer.SpanStatusError, err.Error())
-
 		return err
 	} else {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelSuccess)...).Inc()
@@ -311,35 +264,35 @@ func (w *wrapperConn) Ping(ctx context.Context) error {
 	return nil
 }
 
-// Query implements driver.Queryer Query
-func (w *wrapperConn) Query(query string, args []driver.Value) (driver.Rows, error) {
-	var ctx context.Context
-	if w.ctx != nil {
-		ctx = w.ctx
-	} else {
-		ctx = context.Background()
-	}
-	_ = ctx
-	// nolint:staticcheck
-	conn, ok := w.conn.(driver.Queryer)
+// Ping implements driver.Pinger PingContext
+func (w *wrapperConn) PingContext(ctx context.Context) error {
+	conn, ok := w.conn.(driver.Pinger)
+
 	if !ok {
-		return nil, driver.ErrSkip
+		// fallback path to check db alive
+		pc, err := w.d.Open(w.dname)
+		if err != nil {
+			return err
+		}
+		return pc.Close()
 	}
 
-	labels := []string{labelMethod, "Query", labelQuery, getCallerName()}
+	labels := []string{labelMethod, "Ping"}
 	ts := time.Now()
-	rows, err := conn.Query(query, args)
+	err := conn.Ping(ctx)
 	td := time.Since(ts)
 	te := td.Seconds()
 	if err != nil {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelFailure)...).Inc()
+		// span.SetStatus(tracer.SpanStatusError, err.Error())
+		return err
 	} else {
 		w.opts.Meter.Counter(meterRequestTotal, append(labels, labelStatus, labelSuccess)...).Inc()
 	}
 	w.opts.Meter.Summary(meterRequestLatencyMicroseconds, labels...).Update(te)
 	w.opts.Meter.Histogram(meterRequestDurationSeconds, labels...).Update(te)
 
-	return rows, err
+	return nil
 }
 
 // QueryContext implements Driver.QueryerContext QueryContext

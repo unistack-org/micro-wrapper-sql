@@ -14,11 +14,9 @@ import (
 var connIfaces = []string{
 	"driver.ConnBeginTx",
 	"driver.ConnPrepareContext",
-	"driver.Execer",
 	"driver.ExecerContext",
 	"driver.NamedValueChecker",
 	"driver.Pinger",
-	"driver.Queryer",
 	"driver.QueryerContext",
 	"driver.SessionResetter",
 	"driver.Validator",
