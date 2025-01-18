@@ -25,7 +25,6 @@ var connIfaces = []string{
 var stmtIfaces = []string{
 	"driver.StmtExecContext",
 	"driver.StmtQueryContext",
-	"driver.ColumnConverter",
 	"driver.NamedValueChecker",
 }
 

@@ -4608,34 +4608,6 @@ type wrapConn0001_abc062388a1f7a907b94470050b8bc86 interface {
 
 func wrapStmt(stmt driver.Stmt, query string, opts Options) driver.Stmt {
 	c := &wrapperStmt{stmt: stmt, query: query, opts: opts}
-	if _, ok := stmt.(wrapStmt0004_c1de8b592171dd6c1ac443c171c04be4); ok {
-	return struct {
-		driver.Stmt
-			driver.StmtExecContext
-			driver.StmtQueryContext
-			driver.ColumnConverter
-			driver.NamedValueChecker		
-}{c, c, c, c, c}
-}
-
-	if _, ok := stmt.(wrapStmt0003_b9ce98633dc79f4a9c980cb302695741); ok {
-	return struct {
-		driver.Stmt
-			driver.StmtQueryContext
-			driver.ColumnConverter
-			driver.NamedValueChecker		
-}{c, c, c, c}
-}
-
-	if _, ok := stmt.(wrapStmt0003_99e9fa0a58cdfd18577f397c69971bfe); ok {
-	return struct {
-		driver.Stmt
-			driver.StmtExecContext
-			driver.ColumnConverter
-			driver.NamedValueChecker		
-}{c, c, c, c}
-}
-
 	if _, ok := stmt.(wrapStmt0003_0856d47f81a59090013bce4a1ee5bdd5); ok {
 	return struct {
 		driver.Stmt
@@ -4645,19 +4617,18 @@ func wrapStmt(stmt driver.Stmt, query string, opts Options) driver.Stmt {
 }{c, c, c, c}
 }
 
-	if _, ok := stmt.(wrapStmt0003_e6b11bef8ca1ccb0d5605a2c7d2a031c); ok {
+	if _, ok := stmt.(wrapStmt0002_90dca7297ea2f892831234b29884308e); ok {
+	return struct {
+		driver.Stmt
+			driver.StmtQueryContext
+			driver.NamedValueChecker		
+}{c, c, c}
+}
+
+	if _, ok := stmt.(wrapStmt0002_21dd080dbc547db7e0f1b0faf56aa2c3); ok {
 	return struct {
 		driver.Stmt
 			driver.StmtExecContext
-			driver.StmtQueryContext
-			driver.ColumnConverter		
-}{c, c, c, c}
-}
-
-	if _, ok := stmt.(wrapStmt0002_f6c48d21623fccea572a7155d73bcb7e); ok {
-	return struct {
-		driver.Stmt
-			driver.ColumnConverter
 			driver.NamedValueChecker		
 }{c, c, c}
 }
@@ -4670,49 +4641,10 @@ func wrapStmt(stmt driver.Stmt, query string, opts Options) driver.Stmt {
 }{c, c, c}
 }
 
-	if _, ok := stmt.(wrapStmt0002_21dd080dbc547db7e0f1b0faf56aa2c3); ok {
+	if _, ok := stmt.(wrapStmt0001_dd0fe84666fad76cbf0dee440e953d06); ok {
 	return struct {
 		driver.Stmt
-			driver.StmtExecContext
 			driver.NamedValueChecker		
-}{c, c, c}
-}
-
-	if _, ok := stmt.(wrapStmt0002_85c9c41d2b9b8a7a8fcdecf72e140f4f); ok {
-	return struct {
-		driver.Stmt
-			driver.StmtExecContext
-			driver.ColumnConverter		
-}{c, c, c}
-}
-
-	if _, ok := stmt.(wrapStmt0002_c4a6774a9c81bc05113b6cee4b0e4616); ok {
-	return struct {
-		driver.Stmt
-			driver.StmtQueryContext
-			driver.ColumnConverter		
-}{c, c, c}
-}
-
-	if _, ok := stmt.(wrapStmt0002_90dca7297ea2f892831234b29884308e); ok {
-	return struct {
-		driver.Stmt
-			driver.StmtQueryContext
-			driver.NamedValueChecker		
-}{c, c, c}
-}
-
-	if _, ok := stmt.(wrapStmt0001_6c51dc0f420a9aec8de551dde6d98c41); ok {
-	return struct {
-		driver.Stmt
-			driver.ColumnConverter		
-}{c, c}
-}
-
-	if _, ok := stmt.(wrapStmt0001_be979ee6572ef74e683e3153d6b71c90); ok {
-	return struct {
-		driver.Stmt
-			driver.StmtExecContext		
 }{c, c}
 }
 
@@ -4723,37 +4655,15 @@ func wrapStmt(stmt driver.Stmt, query string, opts Options) driver.Stmt {
 }{c, c}
 }
 
-	if _, ok := stmt.(wrapStmt0001_dd0fe84666fad76cbf0dee440e953d06); ok {
+	if _, ok := stmt.(wrapStmt0001_be979ee6572ef74e683e3153d6b71c90); ok {
 	return struct {
 		driver.Stmt
-			driver.NamedValueChecker		
+			driver.StmtExecContext		
 }{c, c}
 }
 
 return c
 }
-// driver.StmtExecContext|driver.StmtQueryContext|driver.ColumnConverter|driver.NamedValueChecker
-type wrapStmt0004_c1de8b592171dd6c1ac443c171c04be4 interface {
-	driver.StmtExecContext
-	driver.StmtQueryContext
-	driver.ColumnConverter
-	driver.NamedValueChecker
-}
-
-// driver.StmtQueryContext|driver.ColumnConverter|driver.NamedValueChecker
-type wrapStmt0003_b9ce98633dc79f4a9c980cb302695741 interface {
-	driver.StmtQueryContext
-	driver.ColumnConverter
-	driver.NamedValueChecker
-}
-
-// driver.StmtExecContext|driver.ColumnConverter|driver.NamedValueChecker
-type wrapStmt0003_99e9fa0a58cdfd18577f397c69971bfe interface {
-	driver.StmtExecContext
-	driver.ColumnConverter
-	driver.NamedValueChecker
-}
-
 // driver.StmtExecContext|driver.StmtQueryContext|driver.NamedValueChecker
 type wrapStmt0003_0856d47f81a59090013bce4a1ee5bdd5 interface {
 	driver.StmtExecContext
@@ -4761,16 +4671,15 @@ type wrapStmt0003_0856d47f81a59090013bce4a1ee5bdd5 interface {
 	driver.NamedValueChecker
 }
 
-// driver.StmtExecContext|driver.StmtQueryContext|driver.ColumnConverter
-type wrapStmt0003_e6b11bef8ca1ccb0d5605a2c7d2a031c interface {
-	driver.StmtExecContext
+// driver.StmtQueryContext|driver.NamedValueChecker
+type wrapStmt0002_90dca7297ea2f892831234b29884308e interface {
 	driver.StmtQueryContext
-	driver.ColumnConverter
+	driver.NamedValueChecker
 }
 
-// driver.ColumnConverter|driver.NamedValueChecker
-type wrapStmt0002_f6c48d21623fccea572a7155d73bcb7e interface {
-	driver.ColumnConverter
+// driver.StmtExecContext|driver.NamedValueChecker
+type wrapStmt0002_21dd080dbc547db7e0f1b0faf56aa2c3 interface {
+	driver.StmtExecContext
 	driver.NamedValueChecker
 }
 
@@ -4780,38 +4689,9 @@ type wrapStmt0002_1ac318a0d0640d654e838a3d210e928f interface {
 	driver.StmtQueryContext
 }
 
-// driver.StmtExecContext|driver.NamedValueChecker
-type wrapStmt0002_21dd080dbc547db7e0f1b0faf56aa2c3 interface {
-	driver.StmtExecContext
+// driver.NamedValueChecker
+type wrapStmt0001_dd0fe84666fad76cbf0dee440e953d06 interface {
 	driver.NamedValueChecker
-}
-
-// driver.StmtExecContext|driver.ColumnConverter
-type wrapStmt0002_85c9c41d2b9b8a7a8fcdecf72e140f4f interface {
-	driver.StmtExecContext
-	driver.ColumnConverter
-}
-
-// driver.StmtQueryContext|driver.ColumnConverter
-type wrapStmt0002_c4a6774a9c81bc05113b6cee4b0e4616 interface {
-	driver.StmtQueryContext
-	driver.ColumnConverter
-}
-
-// driver.StmtQueryContext|driver.NamedValueChecker
-type wrapStmt0002_90dca7297ea2f892831234b29884308e interface {
-	driver.StmtQueryContext
-	driver.NamedValueChecker
-}
-
-// driver.ColumnConverter
-type wrapStmt0001_6c51dc0f420a9aec8de551dde6d98c41 interface {
-	driver.ColumnConverter
-}
-
-// driver.StmtExecContext
-type wrapStmt0001_be979ee6572ef74e683e3153d6b71c90 interface {
-	driver.StmtExecContext
 }
 
 // driver.StmtQueryContext
@@ -4819,9 +4699,9 @@ type wrapStmt0001_3f3eb31555c2ec79768169cb473a84fe interface {
 	driver.StmtQueryContext
 }
 
-// driver.NamedValueChecker
-type wrapStmt0001_dd0fe84666fad76cbf0dee440e953d06 interface {
-	driver.NamedValueChecker
+// driver.StmtExecContext
+type wrapStmt0001_be979ee6572ef74e683e3153d6b71c90 interface {
+	driver.StmtExecContext
 }
 
 
