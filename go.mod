@@ -1,19 +1,22 @@
-module go.unistack.org/micro-wrapper-sql/v3
+module go.unistack.org/micro-wrapper-sql/v4
 
-go 1.22
+go 1.23.0
 
-toolchain go1.23.2
 
 require (
-	go.unistack.org/micro-wrapper-requestid/v3 v3.9.3
-	go.unistack.org/micro/v3 v3.11.14
+	go.unistack.org/micro-wrapper-requestid/v4 v4.1.0
+	go.unistack.org/micro/v4 v4.1.2
 )
 
 require (
-	go.unistack.org/micro-proto/v3 v3.4.1 // indirect
-	golang.org/x/net v0.32.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241209162323-e6fa225c2576 // indirect
-	google.golang.org/grpc v1.68.1 // indirect
-	google.golang.org/protobuf v1.35.2 // indirect
+	github.com/ash3in/uuidv8 v1.2.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
+	github.com/matoous/go-nanoid v1.5.1 // indirect
+	github.com/spf13/cast v1.7.1 // indirect
+	go.unistack.org/micro-proto/v4 v4.1.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250227231956-55c901821b1e // indirect
+	google.golang.org/grpc v1.70.0 // indirect
+	google.golang.org/protobuf v1.36.5 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

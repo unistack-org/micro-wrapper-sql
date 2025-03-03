@@ -5,7 +5,7 @@ import (
 	"database/sql/driver"
 	"time"
 
-	"go.unistack.org/micro/v3/tracer"
+	"go.unistack.org/micro/v4/tracer"
 )
 
 var _ driver.Tx = (*wrapperTx)(nil)
