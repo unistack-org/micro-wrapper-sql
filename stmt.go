@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	requestid "go.unistack.org/micro-wrapper-requestid/v4"
+	requestid "go.unistack.org/micro/v4/hooks/requestid"
 	"go.unistack.org/micro/v4/tracer"
 )
 
