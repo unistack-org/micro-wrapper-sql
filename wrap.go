@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 )
 
+//nolint:unused
 func wrapDriver(d driver.Driver, opts Options) driver.Driver {
 	if _, ok := d.(driver.DriverContext); ok {
 		return &wrapperDriver{driver: d, opts: opts}

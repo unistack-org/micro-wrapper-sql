@@ -11,6 +11,7 @@ var (
 // _ driver.Connector     = (*wrapperDriver)(nil)
 )
 
+//nolint:unused,staticcheck
 type conn interface {
 	driver.Pinger
 	driver.Execer
@@ -36,7 +37,7 @@ func NewWrapper(d driver.Driver, opts ...Option) driver.Driver {
 
 type wrappedConnector struct {
 	connector driver.Connector
-	name      string
+	name      string //nolint:unused
 	opts      Options
 	ctx       context.Context
 }
